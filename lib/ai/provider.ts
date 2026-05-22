@@ -1,37 +1,49 @@
-import type { AIProvider, AIProviderConfig } from "./types";
+import type { AIProvider, AIProviderConfig, AIQuestionInput, AIResponseOutput } from "./types";
 import { OpenAIProvider } from "./openai";
+import { GeminiProvider } from "./gemini";
 
 let providerInstance: AIProvider | null = null;
 
 function getProviderConfig(): AIProviderConfig {
-  const provider = process.env.AI_PROVIDER ?? "openai";
-  const apiKey = process.env.OPENAI_API_KEY;
+  const provider = (process.env.AI_PROVIDER ?? "gemini").toLowerCase();
 
-  if (!apiKey) {
-    throw new Error("AI provider API key not configured");
+  if (provider === "openai") {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error("OPENAI_API_KEY environment variable not configured");
+    }
+    return { apiKey };
   }
 
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY environment variable not configured");
+  }
   return { apiKey };
 }
 
 export function getAIProvider(): AIProvider {
-  if (providerInstance) {
-    return providerInstance;
-  }
+  if (providerInstance) return providerInstance;
 
   const config = getProviderConfig();
+  const provider = (process.env.AI_PROVIDER ?? "gemini").toLowerCase();
 
-  switch (process.env.AI_PROVIDER) {
+  switch (provider) {
     case "openai":
-    default:
       providerInstance = new OpenAIProvider(config);
+      break;
+    case "gemini":
+    default:
+      providerInstance = new GeminiProvider(config);
       break;
   }
 
   return providerInstance;
 }
 
-export async function generateAIResponse(input: Parameters<AIProvider["generateAnswer"]>[0]) {
+export async function generateAIResponse(
+  input: AIQuestionInput
+): Promise<AIResponseOutput> {
   const provider = getAIProvider();
   return provider.generateAnswer(input);
 }

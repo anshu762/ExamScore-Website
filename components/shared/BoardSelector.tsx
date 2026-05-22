@@ -25,6 +25,7 @@ interface Subject {
 
 export interface StoredSelection {
   boardCode: string;
+  boardId: string;
   boardName: string;
   levelId: string;
   levelName: string;
@@ -98,6 +99,7 @@ export function BoardSelector({ onComplete }: BoardSelectorProps) {
 
     const selection: StoredSelection = {
       boardCode: selectedBoard.code,
+      boardId: selectedBoard.id,
       boardName: selectedBoard.name,
       levelId: selectedLevel.id,
       levelName: selectedLevel.name,
@@ -105,7 +107,11 @@ export function BoardSelector({ onComplete }: BoardSelectorProps) {
       subjectName: subject.name,
     };
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(selection));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(selection));
+    } catch {
+      console.warn("localStorage unavailable, skipping persistence");
+    }
     fetch("/api/user/preferences", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },

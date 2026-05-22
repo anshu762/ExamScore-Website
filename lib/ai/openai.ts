@@ -41,19 +41,26 @@ export class OpenAIProvider implements AIProvider {
   private parseResponse(content: string): AIResponseOutput {
     try {
       const parsed = JSON.parse(content);
+      const visuals = Array.isArray(parsed.visuals)
+        ? parsed.visuals.map((v: any) => ({
+            description: v.description ?? "",
+            type: ["diagram", "graph", "equation", "none"].includes(v.type) ? v.type : "none",
+            hint: v.hint ?? "",
+          }))
+        : [];
 
       return {
         directAnswer: parsed.directAnswer ?? "",
         structureGuide: {
           introduction: parsed.structureGuide?.introduction ?? "",
           body: parsed.structureGuide?.body ?? "",
-          evaluation: parsed.structureGuide?.evaluation,
-          conclusion: parsed.structureGuide?.conclusion,
+          evaluation: parsed.structureGuide?.evaluation ?? null,
+          conclusion: parsed.structureGuide?.conclusion ?? "",
           formattingNotes: parsed.structureGuide?.formattingNotes ?? "",
           paragraphFlow: parsed.structureGuide?.paragraphFlow ?? "",
         },
-        commonMistakes: parsed.commonMistakes ?? [],
-        visuals: parsed.visuals ?? [],
+        commonMistakes: Array.isArray(parsed.commonMistakes) ? parsed.commonMistakes : [],
+        visuals,
       };
     } catch {
       return {
@@ -61,6 +68,8 @@ export class OpenAIProvider implements AIProvider {
         structureGuide: {
           introduction: "",
           body: "",
+          evaluation: null,
+          conclusion: "",
           formattingNotes: "",
           paragraphFlow: "",
         },
