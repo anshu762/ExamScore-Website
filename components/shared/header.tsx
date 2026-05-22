@@ -71,7 +71,7 @@ export function Header() {
             </>
           ) : (
             <>
-              <Link href="/auth/signin">
+              <Link href="/auth/login">
                 <Button variant="ghost" size="sm" className="text-sm">
                   Sign In
                 </Button>

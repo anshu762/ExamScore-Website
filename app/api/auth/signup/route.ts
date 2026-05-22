@@ -1,15 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hashUserPassword } from "@/lib/auth/password";
-import { signUpSchema } from "@/lib/validators/auth";
+import { signUpApiSchema } from "@/lib/validators/auth";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const parsed = signUpSchema.safeParse(body);
+    const parsed = signUpApiSchema.safeParse(body);
 
     if (!parsed.success) {
-      const issues = "issues" in parsed.error ? parsed.error.issues : (parsed.error as any).errors ?? [];
+      const issues =
+        "issues" in parsed.error
+          ? parsed.error.issues
+          : (parsed.error as any).errors ?? [];
       return NextResponse.json(
         { error: issues[0]?.message ?? "Invalid input" },
         { status: 400 }
@@ -29,7 +32,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const passwordHash = hashUserPassword(password);
+    const passwordHash = await hashUserPassword(password);
 
     const user = await prisma.user.create({
       data: {
@@ -43,10 +46,20 @@ export async function POST(request: Request) {
       data: { userId: user.id },
     });
 
-    return NextResponse.json(
-      { user: { id: user.id, name: user.name, email: user.email } },
-      { status: 201 }
-    );
+    await prisma.onboardingQuiz.create({
+      data: { userId: user.id },
+    });
+
+    // Fire-and-forget: increment live counter — do NOT block response
+    prisma.liveUserCount
+      .upsert({
+        where: { id: "1" },
+        update: { count: { increment: 1 } },
+        create: { id: "1", count: 1 },
+      })
+      .catch(() => {});
+
+    return NextResponse.json({ success: true }, { status: 201 });
   } catch (error) {
     console.error("Signup error:", error);
     return NextResponse.json(

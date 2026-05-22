@@ -2,16 +2,13 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { BookOpen } from "lucide-react";
-import { toast } from "sonner";
 
-export default function SignInPage() {
-  const router = useRouter();
+export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -21,24 +18,12 @@ export default function SignInPage() {
     setError("");
 
     const form = new FormData(e.currentTarget);
-    const email = form.get("email") as string;
-    const password = form.get("password") as string;
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
+    await signIn("credentials", {
+      email: form.get("email") as string,
+      password: form.get("password") as string,
+      callbackUrl: "/dashboard",
     });
-
-    if (result?.error) {
-      setError("Invalid email or password");
-      setLoading(false);
-      return;
-    }
-
-    toast.success("Welcome back!");
-    router.push("/dashboard");
-    router.refresh();
   }
 
   return (
@@ -46,10 +31,11 @@ export default function SignInPage() {
       <Card className="w-full max-w-md border-border">
         <CardHeader className="text-center">
           <Link href="/" className="mx-auto mb-4 flex items-center justify-center gap-2">
-            <BookOpen className="h-6 w-6 text-primary" />
-            <span className="text-lg font-semibold text-primary">ExamScore</span>
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+              <BookOpen className="h-4 w-4 text-primary-foreground" />
+            </div>
           </Link>
-          <CardTitle className="text-2xl">Welcome back</CardTitle>
+          <CardTitle className="font-serif text-2xl text-foreground">Welcome back</CardTitle>
           <CardDescription>Sign in to continue your studies</CardDescription>
         </CardHeader>
         <CardContent>
@@ -71,17 +57,17 @@ export default function SignInPage() {
               autoComplete="current-password"
             />
             {error && (
-              <p className="text-sm text-error" role="alert">
+              <p className="text-sm text-destructive" role="alert">
                 {error}
               </p>
             )}
-            <Button type="submit" variant="primary" className="w-full" disabled={loading}>
-              {loading ? "Signing in..." : "Sign In"}
+            <Button type="submit" className="w-full bg-[#0F3226] text-[#FDFCF9] hover:bg-[#1A4A36]" disabled={loading}>
+              {loading ? "Signing in..." : "Log In"}
             </Button>
           </form>
           <p className="mt-4 text-center text-sm text-text-secondary">
             Don&apos;t have an account?{" "}
-            <Link href="/auth/signup" className="font-medium text-primary hover:underline">
+            <Link href="/auth/signup" className="font-medium text-[#0F3226] hover:underline">
               Sign up
             </Link>
           </p>

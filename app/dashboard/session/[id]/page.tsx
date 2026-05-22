@@ -14,7 +14,7 @@ export default async function SessionPage({
   const session = await auth();
 
   if (!session?.user?.id) {
-    redirect("/auth/signin");
+    redirect("/auth/login");
   }
 
   const { id } = await params;

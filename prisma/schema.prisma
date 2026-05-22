@@ -231,7 +231,7 @@ model AnalyticsEvent {
 }
 
 model LiveUserCount {
-  id          String   @id @default("default")
+  id          String   @id @default("1")
   count       Int      @default(0)
   lastUpdated DateTime @updatedAt
 }

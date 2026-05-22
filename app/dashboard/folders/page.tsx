@@ -1,36 +1,35 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import { FlashcardsList } from "@/components/dashboard/flashcards-list";
+import { FoldersList } from "@/components/dashboard/folders-list";
 
-export default async function FlashcardsPage() {
+export default async function FoldersPage() {
   const session = await auth();
 
   if (!session?.user?.id) {
-    redirect("/auth/signin");
+    redirect("/auth/login");
   }
 
-  const flashcards = await prisma.flashcard.findMany({
+  const folders = await prisma.folder.findMany({
     where: { userId: session.user.id },
-    orderBy: { createdAt: "desc" },
+    orderBy: { updatedAt: "desc" },
     include: {
-      subject: true,
-      board: true,
+      _count: { select: { items: true } },
     },
   });
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8">
+    <div className="mx-auto max-w-5xl space-y-8">
       <div>
         <h1 className="font-serif text-2xl font-semibold text-primary">
-          Flashcards
+          Folders
         </h1>
         <p className="mt-1 text-text-secondary">
-          Review and manage your flashcards.
+          Organize your study materials into collections.
         </p>
       </div>
 
-      <FlashcardsList flashcards={flashcards} />
+      <FoldersList folders={folders} />
     </div>
   );
 }

@@ -1,18 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { BookOpen } from "lucide-react";
-import { toast } from "sonner";
-import { signIn } from "next-auth/react";
 import { signUpSchema } from "@/lib/validators/auth";
 
 export default function SignUpPage() {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -26,12 +23,16 @@ export default function SignUpPage() {
       name: form.get("name") as string,
       email: form.get("email") as string,
       password: form.get("password") as string,
+      confirmPassword: form.get("confirmPassword") as string,
     };
 
     const result = signUpSchema.safeParse(data);
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
-      const issues = "issues" in result.error ? result.error.issues : (result.error as any).errors ?? [];
+      const issues =
+        "issues" in result.error
+          ? result.error.issues
+          : (result.error as any).errors ?? [];
       for (const err of issues) {
         const field = err.path[0] as string;
         fieldErrors[field] = err.message;
@@ -45,7 +46,7 @@ export default function SignUpPage() {
       const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ name: data.name, email: data.email, password: data.password }),
       });
 
       if (!response.ok) {
@@ -55,21 +56,11 @@ export default function SignUpPage() {
         return;
       }
 
-      const signInResult = await signIn("credentials", {
+      await signIn("credentials", {
         email: data.email,
         password: data.password,
-        redirect: false,
+        callbackUrl: "/onboarding/quiz",
       });
-
-      if (signInResult?.error) {
-        toast.error("Account created. Please sign in.");
-        router.push("/auth/signin");
-        return;
-      }
-
-      toast.success("Welcome to ExamScore!");
-      router.push("/dashboard");
-      router.refresh();
     } catch {
       setErrors({ form: "An unexpected error occurred" });
       setLoading(false);
@@ -81,10 +72,11 @@ export default function SignUpPage() {
       <Card className="w-full max-w-md border-border">
         <CardHeader className="text-center">
           <Link href="/" className="mx-auto mb-4 flex items-center justify-center gap-2">
-            <BookOpen className="h-6 w-6 text-primary" />
-            <span className="text-lg font-semibold text-primary">ExamScore</span>
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+              <BookOpen className="h-4 w-4 text-primary-foreground" />
+            </div>
           </Link>
-          <CardTitle className="text-2xl">Create your account</CardTitle>
+          <CardTitle className="font-serif text-2xl text-foreground">Create your account</CardTitle>
           <CardDescription>Start your exam preparation journey</CardDescription>
         </CardHeader>
         <CardContent>
@@ -114,19 +106,28 @@ export default function SignUpPage() {
               autoComplete="new-password"
               error={errors.password}
             />
+            <Input
+              label="Confirm Password"
+              name="confirmPassword"
+              type="password"
+              placeholder="Re-enter your password"
+              required
+              autoComplete="new-password"
+              error={errors.confirmPassword}
+            />
             {errors.form && (
-              <p className="text-sm text-error" role="alert">
+              <p className="text-sm text-destructive" role="alert">
                 {errors.form}
               </p>
             )}
-            <Button type="submit" variant="primary" className="w-full" disabled={loading}>
-              {loading ? "Creating account..." : "Create Account"}
+            <Button type="submit" className="w-full bg-[#0F3226] text-[#FDFCF9] hover:bg-[#1A4A36]" disabled={loading}>
+              {loading ? "Creating account..." : "Get Started"}
             </Button>
           </form>
           <p className="mt-4 text-center text-sm text-text-secondary">
             Already have an account?{" "}
-            <Link href="/auth/signin" className="font-medium text-primary hover:underline">
-              Sign in
+            <Link href="/auth/login" className="font-medium text-[#0F3226] hover:underline">
+              Log in
             </Link>
           </p>
         </CardContent>

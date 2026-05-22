@@ -1,24 +1,26 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const protectedPaths = ["/dashboard"];
-const authPaths = ["/auth/signin", "/auth/signup"];
+const protectedPrefixes = ["/dashboard", "/app", "/onboarding"];
+const authPrefixes = ["/auth/login", "/auth/signup"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const sessionToken = request.cookies.get("next-auth.session-token")?.value
-    ?? request.cookies.get("__Secure-next-auth.session-token")?.value;
+  const sessionCookie =
+    request.cookies.get("authjs.session-token") ??
+    request.cookies.get("__Secure-authjs.session-token");
+  const isLoggedIn = !!sessionCookie;
 
-  const isProtected = protectedPaths.some((p) => pathname.startsWith(p));
-  const isAuth = authPaths.some((p) => pathname.startsWith(p));
+  const isProtected = protectedPrefixes.some((p) => pathname.startsWith(p));
+  const isAuth = authPrefixes.some((p) => pathname.startsWith(p));
 
-  if (isProtected && !sessionToken) {
-    const signInUrl = new URL("/auth/signin", request.url);
-    signInUrl.searchParams.set("callbackUrl", pathname);
-    return NextResponse.redirect(signInUrl);
+  if (isProtected && !isLoggedIn) {
+    const loginUrl = new URL("/auth/login", request.url);
+    loginUrl.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
-  if (isAuth && sessionToken) {
+  if (isAuth && isLoggedIn) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
