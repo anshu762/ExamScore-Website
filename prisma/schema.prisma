@@ -1,0 +1,236 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  STUDENT
+  ADMIN
+}
+
+enum BoardCode {
+  IB
+  AP
+  CAMBRIDGE
+  CBSE
+  ICSE
+}
+
+enum FolderItemType {
+  QUESTION
+  FLASHCARD
+  NOTE
+  GRAPH
+}
+
+enum FlashcardSource {
+  AI_GENERATED
+  MANUAL
+}
+
+enum QuizStatus {
+  PENDING
+  COMPLETED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String?
+  role         UserRole @default(STUDENT)
+  primaryBoard BoardCode?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  folders          Folder[]
+  notes            Note[]
+  flashcards       Flashcard[]
+  quizResult       OnboardingQuiz?
+  gamification     GamificationMetric?
+  questionSessions QuestionSession[]
+  analyticsEvents  AnalyticsEvent[]
+}
+
+model Board {
+  id          String    @id @default(cuid())
+  code        BoardCode @unique
+  name        String
+  description String
+
+  academicLevels   AcademicLevel[]
+  subjects         Subject[]
+  questionSessions QuestionSession[]
+  flashcards       Flashcard[]
+}
+
+model AcademicLevel {
+  id      String @id @default(cuid())
+  boardId String
+  name    String
+  order   Int
+
+  board           Board             @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  questionSessions QuestionSession[]
+  subjects        Subject[]
+
+  @@unique([boardId, name])
+  @@index([boardId])
+}
+
+model Subject {
+  id       String  @id @default(cuid())
+  boardId  String
+  levelId  String?
+  name     String
+  code     String
+  isActive Boolean @default(true)
+
+  board            Board           @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  level            AcademicLevel?  @relation(fields: [levelId], references: [id], onDelete: SetNull)
+  questionSessions QuestionSession[]
+  flashcards       Flashcard[]
+
+  @@unique([boardId, code])
+  @@index([boardId])
+  @@index([levelId])
+}
+
+model QuestionSession {
+  id           String   @id @default(cuid())
+  userId       String
+  boardId      String
+  levelId      String
+  subjectId    String
+  questionText String
+  createdAt    DateTime @default(now())
+
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  board     Board         @relation(fields: [boardId], references: [id])
+  level     AcademicLevel @relation(fields: [levelId], references: [id])
+  subject   Subject       @relation(fields: [subjectId], references: [id])
+  aiResponse AIResponse?
+
+  @@index([userId])
+  @@index([boardId])
+  @@index([createdAt])
+}
+
+model AIResponse {
+  id                 String   @id @default(cuid())
+  questionSessionId  String   @unique
+  directAnswer       String
+  structureGuide     Json
+  commonMistakes     Json
+  visuals            Json
+  rawProviderPayload String?
+  createdAt          DateTime @default(now())
+
+  questionSession QuestionSession @relation(fields: [questionSessionId], references: [id], onDelete: Cascade)
+}
+
+model Folder {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  color     String   @default("#0F3226")
+  icon      String   @default("folder")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items FolderItem[]
+
+  @@index([userId])
+}
+
+model FolderItem {
+  id          String         @id @default(cuid())
+  folderId    String
+  type        FolderItemType
+  referenceId String
+
+  folder Folder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+
+  @@index([folderId])
+  @@unique([folderId, type, referenceId])
+}
+
+model Note {
+  id              String   @id @default(cuid())
+  userId          String
+  title           String
+  content         String
+  linkedSessionId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Flashcard {
+  id        String          @id @default(cuid())
+  userId    String
+  front     String
+  back      String
+  boardId   String
+  subjectId String
+  source    FlashcardSource @default(MANUAL)
+  createdAt DateTime        @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  board   Board   @relation(fields: [boardId], references: [id])
+  subject Subject @relation(fields: [subjectId], references: [id])
+
+  @@index([userId])
+  @@index([boardId])
+}
+
+model OnboardingQuiz {
+  id            String      @id @default(cuid())
+  userId        String      @unique
+  status        QuizStatus  @default(PENDING)
+  answers       Json        @default("{}")
+  resultProfile Json        @default("{}")
+  completedAt   DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model GamificationMetric {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  accuracyScore    Float    @default(0)
+  consistencyScore Float    @default(0)
+  streakDays       Int      @default(0)
+  lastUpdated      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  payload   Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model LiveUserCount {
+  id          String   @id @default("default")
+  count       Int      @default(0)
+  lastUpdated DateTime @updatedAt
+}
