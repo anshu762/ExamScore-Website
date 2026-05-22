@@ -4,6 +4,15 @@ import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
+interface BoardView {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  academicLevels: { id: string; name: string; order: number }[];
+  subjects: { id: string; name: string; code: string }[];
+}
+
 export default async function BoardsPage() {
   const session = await auth();
 
@@ -34,7 +43,7 @@ export default async function BoardsPage() {
       </div>
 
       <div className="grid gap-6">
-        {boards.map((board) => (
+        {boards.map((board: BoardView) => (
           <Card key={board.id} className="border-border">
             <CardHeader>
               <div className="flex items-center justify-between">
