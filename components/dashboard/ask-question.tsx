@@ -10,12 +10,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Sparkles, AlertCircle, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 
-interface Board {
-  id: string;
-  code: string;
-  name: string;
-}
-
 interface AIResponseData {
   directAnswer: string;
   structureGuide: {
@@ -30,7 +24,7 @@ interface AIResponseData {
   visuals: string[];
 }
 
-export function AskQuestion({ boards }: { boards: Board[] }) {
+export function AskQuestion() {
   const [selectedBoard, setSelectedBoard] = useState("");
   const [selectedLevel, setSelectedLevel] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
