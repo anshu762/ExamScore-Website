@@ -8,7 +8,7 @@ export default async function ProgressPage() {
   const session = await auth();
 
   if (!session?.user?.id) {
-    redirect("/auth/signin");
+    redirect("/auth/login");
   }
 
   const metric = await prisma.gamificationMetric.findUnique({

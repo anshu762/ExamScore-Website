@@ -1,26 +1,14 @@
-import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
+import bcrypt from "bcrypt";
 
-function generateSalt(): string {
-  return randomBytes(16).toString("hex");
+const SALT_ROUNDS = 12;
+
+export async function hashUserPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, SALT_ROUNDS);
 }
 
-function hashPassword(password: string, salt: string): string {
-  const derivedKey = scryptSync(password, salt, 64);
-  return derivedKey.toString("hex");
-}
-
-export function hashUserPassword(password: string): string {
-  const salt = generateSalt();
-  const hashed = hashPassword(password, salt);
-  return `${salt}:${hashed}`;
-}
-
-export function verifyPassword(password: string, stored: string): boolean {
-  const [salt, key] = stored.split(":");
-  if (!salt || !key) return false;
-  const derivedKey = scryptSync(password, salt, 64);
-  const keyBuffer = Buffer.from(key, "hex");
-  const derivedBuffer = derivedKey;
-  if (keyBuffer.length !== derivedBuffer.length) return false;
-  return timingSafeEqual(keyBuffer, derivedBuffer);
+export async function verifyPassword(
+  password: string,
+  hash: string
+): Promise<boolean> {
+  return bcrypt.compare(password, hash);
 }

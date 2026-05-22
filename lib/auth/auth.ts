@@ -5,28 +5,12 @@ import { verifyPassword } from "./password";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   pages: {
-    signIn: "/auth/signin",
+    signIn: "/auth/login",
     newUser: "/auth/signup",
   },
   session: { strategy: "jwt" },
   trustHost: true,
   callbacks: {
-    authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user;
-      const isOnDashboard = nextUrl.pathname.startsWith("/dashboard");
-      const isOnAuth = nextUrl.pathname.startsWith("/auth");
-
-      if (isOnDashboard) {
-        if (isLoggedIn) return true;
-        return false;
-      }
-
-      if (isOnAuth && isLoggedIn) {
-        return Response.redirect(new URL("/dashboard", nextUrl));
-      }
-
-      return true;
-    },
     jwt({ token, user }) {
       if (user) {
         token.id = user.id;
@@ -58,7 +42,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        const isValid = verifyPassword(password, user.passwordHash);
+        const isValid = await verifyPassword(password, user.passwordHash);
         if (!isValid) {
           return null;
         }

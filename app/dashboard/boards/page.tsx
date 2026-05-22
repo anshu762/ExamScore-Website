@@ -17,7 +17,7 @@ export default async function BoardsPage() {
   const session = await auth();
 
   if (!session?.user?.id) {
-    redirect("/auth/signin");
+    redirect("/auth/login");
   }
 
   const boards = await prisma.board.findMany({
