@@ -146,7 +146,7 @@ export function BoardSelector({ onComplete }: BoardSelectorProps) {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: i * 0.05 }}
                     onClick={() => handleBoardSelect(board)}
-                    className="group relative rounded-xl border border-[#D6D0C4]/50 bg-[#FDFCF9] p-5 text-left shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md"
+                    className="group relative rounded-xl border border-[#D6D0C4]/50 bg-[#FDFCF9] p-5 text-left shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-[#0F3226]/40 hover:bg-[#0F3226]/5 hover:shadow-md"
                   >
                     <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0F3226]/5 ring-1 ring-[#0F3226]/10 transition-colors group-hover:bg-[#0F3226]/10">
                       <BookOpen className="h-4 w-4 text-[#0F3226]" />
@@ -179,7 +179,7 @@ export function BoardSelector({ onComplete }: BoardSelectorProps) {
                   <button
                     key={level.id}
                     onClick={() => handleLevelSelect(level)}
-                    className="rounded-lg border border-[#D6D0C4]/50 bg-[#FDFCF9] px-5 py-2.5 text-sm font-medium text-[#0A1A14] shadow-sm transition-all duration-150 hover:border-[#0F3226]/30 hover:bg-[#0F3226]/5"
+                    className="rounded-lg border border-[#D6D0C4]/50 bg-[#FDFCF9] px-5 py-2.5 text-sm font-medium text-[#0A1A14] shadow-sm transition-all duration-150 hover:border-[#0F3226] hover:bg-[#0F3226]/5 hover:text-[#0F3226]"
                   >
                     {level.name}
                   </button>
@@ -237,7 +237,7 @@ export function BoardSelector({ onComplete }: BoardSelectorProps) {
                 <button
                   key={subject.id}
                   onClick={() => handleSubjectSelect(subject)}
-                  className="rounded-lg border border-[#D6D0C4]/50 bg-[#FDFCF9] px-4 py-2 text-sm font-medium text-[#0A1A14] shadow-sm transition-all duration-150 hover:border-[#0F3226]/30 hover:bg-[#0F3226]/5"
+                  className="rounded-lg border border-[#D6D0C4]/50 bg-[#FDFCF9] px-4 py-2 text-sm font-medium text-[#0A1A14] shadow-sm transition-all duration-150 hover:border-[#0F3226] hover:bg-[#0F3226]/10 hover:text-[#0F3226]"
                 >
                   {subject.name}
                 </button>

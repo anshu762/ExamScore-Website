@@ -47,9 +47,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       >
         <div className="flex h-16 items-center justify-between px-5">
           <Link href="/" className="flex items-center gap-2.5" onClick={closeSidebar}>
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[#FDFCF9]/10">
-              <span className="text-sm font-bold text-[#FDFCF9]">E</span>
-            </div>
+            <img src="/logo.jpg" alt="ExamScore" className="h-7 w-auto" />
             <span className="font-serif text-base font-semibold tracking-tight text-[#FDFCF9]">
               ExamScore
             </span>
@@ -119,10 +117,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <Menu className="h-4 w-4" />
           </button>
           <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded bg-[#0F3226]">
-              <span className="text-[10px] font-bold text-[#FDFCF9]">E</span>
-            </div>
+            <img src="/logo.jpg" alt="ExamScore" className="h-5 w-auto" />
             <span className="font-serif text-sm font-semibold text-[#0A1A14]">ExamScore</span>
+          </div>
+          <div className="ml-auto">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#0F3226]/10 text-[10px] font-semibold text-[#0F3226]">
+              {session?.user?.name?.charAt(0)?.toUpperCase() ?? "U"}
+            </div>
           </div>
         </header>
 
