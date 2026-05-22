@@ -25,9 +25,7 @@ export default function DashboardLayout({
             <Menu className="h-4 w-4" />
           </button>
           <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded bg-primary shadow-xs">
-              <span className="text-[10px] font-bold text-primary-foreground">E</span>
-            </div>
+            <img src="/logo.jpg" alt="ExamScore" className="h-6 w-6 rounded object-cover" />
             <span className="text-sm font-semibold text-foreground">ExamScore</span>
           </div>
         </header>

@@ -51,9 +51,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         <div className="relative flex h-16 items-center justify-between px-5">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/50 to-transparent" />
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary shadow-sm">
-              <span className="text-sm font-bold text-primary-foreground">E</span>
-            </div>
+            <img src="/logo.jpg" alt="ExamScore" className="h-8 w-8 rounded-md object-cover shadow-sm" />
             <span className="text-sm font-semibold tracking-tight text-foreground">ExamScore</span>
           </Link>
           <button
