@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { Select } from "@/components/ui/select";
 
@@ -41,60 +39,59 @@ export function BoardSelector({
   const [selectedBoard, setSelectedBoard] = useState(initialBoardId);
   const [selectedLevel, setSelectedLevel] = useState(initialLevelId);
   const [selectedSubject, setSelectedSubject] = useState(initialSubjectId);
+  const [selectedBoardCode, setSelectedBoardCode] = useState("");
 
   const [loadingBoards, setLoadingBoards] = useState(true);
   const [loadingLevels, setLoadingLevels] = useState(false);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
 
   useEffect(() => {
-    async function fetchBoards() {
-      try {
-        const res = await fetch("/api/boards");
-        const data = await res.json();
+    fetch("/api/boards")
+      .then((r) => r.json())
+      .then((data: Board[]) => {
         setBoards(data);
-      } catch (err) {
-        console.error("Failed to fetch boards:", err);
-      } finally {
-        setLoadingBoards(false);
-      }
-    }
-    fetchBoards();
-  }, []);
+        if (initialBoardId) {
+          const match = data.find((b) => b.id === initialBoardId);
+          if (match) setSelectedBoardCode(match.code.toLowerCase());
+        }
+      })
+      .catch(console.error)
+      .finally(() => setLoadingBoards(false));
+  }, [initialBoardId]);
 
   useEffect(() => {
-    if (!selectedBoard) {
+    if (!selectedBoard || !selectedBoardCode) {
       setLevels([]);
       setSubjects([]);
       return;
     }
-
     setLoadingLevels(true);
     setSelectedLevel("");
     setSelectedSubject("");
-
-    fetch(`/api/boards/${selectedBoard}/levels`)
-      .then((res) => res.json())
+    fetch(`/api/boards/${selectedBoardCode}/levels`)
+      .then((r) => r.json())
       .then(setLevels)
       .catch(console.error)
       .finally(() => setLoadingLevels(false));
-  }, [selectedBoard]);
+  }, [selectedBoard, selectedBoardCode]);
 
   useEffect(() => {
-    if (!selectedBoard) {
+    if (!selectedBoard || !selectedBoardCode) {
       setSubjects([]);
       return;
     }
-
+    if (!selectedLevel) {
+      setSubjects([]);
+      return;
+    }
     setLoadingSubjects(true);
     setSelectedSubject("");
-
-    const levelParam = selectedLevel ? `?levelId=${selectedLevel}` : "";
-    fetch(`/api/boards/${selectedBoard}/subjects${levelParam}`)
-      .then((res) => res.json())
+    fetch(`/api/boards/${selectedBoardCode}/levels/${selectedLevel}/subjects`)
+      .then((r) => r.json())
       .then(setSubjects)
       .catch(console.error)
       .finally(() => setLoadingSubjects(false));
-  }, [selectedBoard, selectedLevel]);
+  }, [selectedBoard, selectedBoardCode, selectedLevel]);
 
   useEffect(() => {
     if (selectedBoard && selectedLevel && selectedSubject) {
@@ -109,7 +106,12 @@ export function BoardSelector({
         placeholder={loadingBoards ? "Loading..." : "Select board"}
         options={boards.map((b) => ({ value: b.id, label: b.name }))}
         value={selectedBoard}
-        onChange={(e) => setSelectedBoard(e.target.value)}
+        onChange={(e) => {
+          const id = e.target.value;
+          setSelectedBoard(id);
+          const match = boards.find((b) => b.id === id);
+          setSelectedBoardCode(match ? match.code.toLowerCase() : "");
+        }}
       />
       <Select
         label="Level"
@@ -130,14 +132,14 @@ export function BoardSelector({
         placeholder={
           loadingSubjects
             ? "Loading..."
-            : selectedBoard
+            : selectedBoard && selectedLevel
               ? "Select subject"
-              : "Select board first"
+              : "Select board and level first"
         }
         options={subjects.map((s) => ({ value: s.id, label: s.name }))}
         value={selectedSubject}
         onChange={(e) => setSelectedSubject(e.target.value)}
-        disabled={!selectedBoard || loadingSubjects}
+        disabled={!selectedBoard || !selectedLevel || loadingSubjects}
       />
     </div>
   );

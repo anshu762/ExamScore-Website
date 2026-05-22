@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const protectedPrefixes = ["/dashboard", "/app", "/onboarding"];
+const protectedPrefixes = ["/dashboard", "/app", "/onboarding", "/ask", "/folders", "/flashcards", "/progress"];
 const authPrefixes = ["/auth/login", "/auth/signup"];
 
 export function middleware(request: NextRequest) {
