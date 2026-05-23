@@ -5,7 +5,10 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Sparkles, FolderKanban, Target, Brain, ArrowRight, Clock, Zap } from "lucide-react";
+import {
+  Sparkles, FolderKanban, Target, Brain, ArrowRight, Clock, Zap,
+  BookOpen, BarChart3,
+} from "lucide-react";
 
 interface OverviewProps {
   userName: string;
@@ -28,6 +31,13 @@ interface OverviewProps {
     color: string;
     icon: string;
   }>;
+  quizProfile: {
+    weaknesses: string[];
+    recommendedTechniques: string[];
+    studyStyle: string;
+    sessionPreference: string;
+    notes?: string;
+  } | null;
 }
 
 const container = {
@@ -48,6 +58,7 @@ export function DashboardOverview({
   recentSessions,
   metrics,
   folders,
+  quizProfile,
 }: OverviewProps) {
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-8">
@@ -63,15 +74,78 @@ export function DashboardOverview({
         </p>
       </motion.div>
 
+      {/* Study Strategy Widget */}
+      <motion.div variants={item}>
+        {quizProfile ? (
+          <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-br from-primary/[0.03] to-accent/[0.02] p-5 shadow-sm">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(15,50,38,0.03)_0%,transparent_60%)]" />
+            <div className="relative">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                    <Brain className="h-4 w-4 text-primary" />
+                  </div>
+                  <p className="text-sm font-semibold text-foreground">Your Study Strategy</p>
+                </div>
+                <Link
+                  href="/onboarding/result"
+                  className="text-xs font-medium text-text-muted transition-colors hover:text-primary"
+                >
+                  View full profile
+                </Link>
+              </div>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {quizProfile.recommendedTechniques?.slice(0, 3).map((t: string) => (
+                  <span
+                    key={t}
+                    className="inline-flex items-center gap-1 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-[11px] font-medium text-primary"
+                  >
+                    {t === "flashcards" && <Brain className="h-3 w-3" />}
+                    {t === "timed_practice" && <Clock className="h-3 w-3" />}
+                    {t === "past_paper_drilling" && <BookOpen className="h-3 w-3" />}
+                    {t === "active_recall" && <Zap className="h-3 w-3" />}
+                    {t === "blurting" && <Sparkles className="h-3 w-3" />}
+                    {t === "mind_maps" && <BarChart3 className="h-3 w-3" />}
+                    {t === "streak_building" && <Zap className="h-3 w-3" />}
+                    {t === "daily_goals" && <Target className="h-3 w-3" />}
+                    {t.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                  </span>
+                ))}
+                <span className="text-[11px] text-text-muted">
+                  · {quizProfile.studyStyle} · {quizProfile.sessionPreference === "short_frequent" ? "Short sessions" : "Deep focus"}
+                </span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <Link
+            href="/onboarding/quiz"
+            className="group relative block overflow-hidden rounded-xl bg-gradient-to-br from-primary to-primary-dark p-5 shadow-sm transition-all hover:shadow-md"
+          >
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(253,252,249,0.08)_0%,transparent_60%)]" />
+            <div className="relative flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FDFCF9]/10">
+                <Sparkles className="h-5 w-5 text-[#FDFCF9]" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-[#FDFCF9]">Complete Your Setup</p>
+                <p className="mt-0.5 text-xs text-[#FDFCF9]/70">
+                  Take a 2-minute quiz to personalise your study strategy
+                </p>
+              </div>
+              <ArrowRight className="h-5 w-5 text-[#FDFCF9]/50 transition-transform group-hover:translate-x-0.5" />
+            </div>
+          </Link>
+        )}
+      </motion.div>
+
       <motion.div variants={item} className="grid gap-4 sm:grid-cols-3">
         <div className="group relative overflow-hidden rounded-xl border border-border/60 bg-card p-6 shadow-sm transition-all duration-200 hover:shadow-md">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.02] to-transparent" />
           <div className="relative">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium uppercase tracking-[0.1em] text-text-muted">
-                  Accuracy
-                </p>
+                <p className="text-xs font-medium uppercase tracking-[0.1em] text-text-muted">Accuracy</p>
                 <div className="mt-1 flex items-baseline gap-1.5">
                   <span className="text-3xl font-semibold text-foreground">{metrics.accuracyScore}</span>
                   <span className="text-sm text-text-muted">%</span>
@@ -95,9 +169,7 @@ export function DashboardOverview({
           <div className="relative">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium uppercase tracking-[0.1em] text-text-muted">
-                  Consistency
-                </p>
+                <p className="text-xs font-medium uppercase tracking-[0.1em] text-text-muted">Consistency</p>
                 <div className="mt-1 flex items-baseline gap-1.5">
                   <span className="text-3xl font-semibold text-foreground">{metrics.consistencyScore}</span>
                   <span className="text-sm text-text-muted">%</span>
@@ -121,9 +193,7 @@ export function DashboardOverview({
           <div className="relative">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium uppercase tracking-[0.1em] text-text-muted">
-                  Day Streak
-                </p>
+                <p className="text-xs font-medium uppercase tracking-[0.1em] text-text-muted">Day Streak</p>
                 <div className="mt-1 flex items-baseline gap-1.5">
                   <span className="text-3xl font-semibold text-foreground">{metrics.streakDays}</span>
                   <span className="text-sm text-text-muted">days</span>
@@ -277,10 +347,7 @@ export function DashboardOverview({
                       className="flex h-9 w-9 items-center justify-center rounded-lg transition-colors group-hover:brightness-110"
                       style={{ backgroundColor: `${folder.color}15` }}
                     >
-                      <FolderKanban
-                        className="h-4 w-4"
-                        style={{ color: folder.color }}
-                      />
+                      <FolderKanban className="h-4 w-4" style={{ color: folder.color }} />
                     </div>
                     <span className="text-sm font-medium text-foreground group-hover:text-primary">
                       {folder.name}
