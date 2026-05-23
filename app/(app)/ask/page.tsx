@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { BoardSelector, getStoredSelection, type StoredSelection } from "@/components/shared/BoardSelector";
 import { QuestionInput } from "@/components/shared/QuestionInput";
 import { AnswerDisplay } from "@/components/shared/AnswerDisplay";
 import { useSession } from "next-auth/react";
-import { Clock, RotateCcw } from "lucide-react";
+import { Sparkles, Clock, RotateCcw, BookOpen, ChevronRight, ArrowRight, GraduationCap, History } from "lucide-react";
 import type { Visual } from "@/lib/ai/types";
 
 interface HistoryItem {
@@ -66,11 +67,9 @@ export default function AskPage() {
 
   async function handleSubmit() {
     if (!question.trim() || !selection) return;
-
     setLoading(true);
     setError("");
     setResponse(null);
-
     try {
       const res = await fetch("/api/ai/answer", {
         method: "POST",
@@ -83,12 +82,10 @@ export default function AskPage() {
           subjectId: selection.subjectId,
         }),
       });
-
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.error ?? "Failed to get answer");
       }
-
       const data = await res.json();
       setResponse({
         directAnswer: data.directAnswer,
@@ -112,155 +109,244 @@ export default function AskPage() {
   const noSelection = !selection;
 
   return (
-    <div className="flex gap-8">
+    <div className="flex gap-10">
       <div className="min-w-0 flex-1">
         {noSelection ? (
-          <div className="mx-auto max-w-3xl">
-            <div className="mb-8">
-              <h1 className="font-serif text-2xl font-semibold text-[#0A1A14]">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mx-auto max-w-3xl"
+          >
+            <div className="mb-8 text-center">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#0F3226]/10 bg-[#0F3226]/5 px-4 py-1.5">
+                <GraduationCap className="h-3.5 w-3.5 text-[#0F3226]" />
+                <span className="text-[11px] font-medium text-[#0F3226]">Board-specific answers</span>
+              </div>
+              <h1 className="font-serif text-3xl font-semibold tracking-tight text-[#0A1A14] sm:text-4xl">
                 Ask a Question
               </h1>
-              <p className="mt-1 text-sm text-[#3D4F47]">
-                Select your curriculum context to get board-specific answers.
+              <p className="mt-2 text-sm leading-relaxed text-[#3D4F47]">
+                Select your curriculum context. We&apos;ll tailor the answer to your board&apos;s marking scheme.
               </p>
             </div>
             <BoardSelector onComplete={handleBoardComplete} />
-          </div>
+          </motion.div>
         ) : (
           <div className="mx-auto max-w-3xl">
-            <div className="mb-6 flex items-center justify-between rounded-lg border border-[#D6D0C4]/50 bg-[#FDFCF9] px-4 py-3 shadow-sm">
-              <div className="flex items-center gap-2 text-sm text-[#3D4F47]">
-                <span className="font-medium text-[#0F3226]">
-                  {selection.boardName}
-                </span>
-                <span className="text-[#D6D0C4]">/</span>
-                <span className="font-medium text-[#0F3226]">
-                  {selection.levelName}
-                </span>
-                <span className="text-[#D6D0C4]">/</span>
-                <span className="font-medium text-[#0F3226]">
-                  {selection.subjectName}
-                </span>
-                <span className="ml-1.5 rounded-full bg-[#0F3226]/5 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-[#0F3226]/70">
-                  {selection.boardCode}
-                </span>
-              </div>
-              <button
-                onClick={handleChange}
-                className="rounded-md px-2.5 py-1 text-xs font-medium text-[#6B7A72] transition-colors hover:bg-[#0F3226]/5 hover:text-[#0F3226]"
-              >
-                Change
-              </button>
-            </div>
-
-            <div className="mb-6">
-              <label className="mb-2 block font-serif text-sm font-medium text-[#0A1A14]">
-                Your Question
-              </label>
-              <QuestionInput
-                value={question}
-                onChange={setQuestion}
-                onSubmit={handleSubmit}
-                disabled={loading}
-                placeholder={`Ask your question for ${selection.subjectName} — ${selection.boardName} style`}
-                maxLength={2000}
-              />
-            </div>
-
-            <button
-              onClick={handleSubmit}
-              disabled={loading || !question.trim()}
-              className="mb-8 w-full rounded-xl bg-[#0F3226] py-3 font-serif text-base font-semibold text-[#FDFCF9] shadow-sm transition-all hover:bg-[#0F3226]/90 disabled:cursor-not-allowed disabled:opacity-50"
+            {/* Context bar — premium */}
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 overflow-hidden rounded-xl border border-[#D6D0C4]/30 bg-[#FDFCF9] shadow-sm"
             >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="h-4 w-4 animate-pulse rounded-full bg-[#FDFCF9]/30" />
-                  Generating your board-specific answer...
+              <div className="flex items-center justify-between px-5 py-3.5">
+                <div className="flex min-w-0 flex-wrap items-center gap-1.5 text-sm">
+                  <span className="flex items-center gap-1.5 rounded-lg bg-[#0F3226]/5 px-2.5 py-1 font-medium text-[#0F3226]">
+                    <BookOpen className="h-3.5 w-3.5" />
+                    {selection.boardName}
+                  </span>
+                  <ChevronRight className="h-3 w-3 shrink-0 text-[#D6D0C4]" />
+                  <span className="rounded-lg bg-[#0F3226]/5 px-2.5 py-1 font-medium text-[#0F3226]">
+                    {selection.levelName}
+                  </span>
+                  <ChevronRight className="h-3 w-3 shrink-0 text-[#D6D0C4]" />
+                  <span className="rounded-lg bg-[#C9A84C]/10 px-2.5 py-1 font-medium text-[#A8882E]">
+                    {selection.subjectName}
+                  </span>
+                  <span className="ml-1 rounded-full bg-[#0F3226]/5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#0F3226]/60">
+                    {selection.boardCode}
+                  </span>
+                </div>
+                <button
+                  onClick={handleChange}
+                  className="ml-3 shrink-0 rounded-lg border border-[#D6D0C4]/40 px-3 py-1.5 text-[11px] font-medium text-[#6B7A72] transition-all hover:border-[#0F3226]/30 hover:bg-[#0F3226]/5 hover:text-[#0F3226]"
+                >
+                  Change
+                </button>
+              </div>
+              <div className="h-px bg-gradient-to-r from-[#0F3226]/10 via-[#C9A84C]/10 to-transparent" />
+            </motion.div>
+
+            {/* Question input — premium */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="mb-6"
+            >
+              <div className="mb-3 flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-md bg-gradient-to-br from-[#0F3226]/10 to-[#0F3226]/5">
+                  <Sparkles className="h-3.5 w-3.5 text-[#0F3226]" />
+                </div>
+                <span className="text-xs font-semibold uppercase tracking-[0.1em] text-[#6B7A72]">
+                  Your Question
                 </span>
-              ) : (
-                "Get Answer"
+              </div>
+              <div className="group relative">
+                <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-[#0F3226]/20 via-[#C9A84C]/10 to-[#0F3226]/20 opacity-0 blur-sm transition-opacity group-focus-within:opacity-100" />
+                <div className="relative">
+                  <QuestionInput
+                    value={question}
+                    onChange={setQuestion}
+                    onSubmit={handleSubmit}
+                    disabled={loading}
+                    placeholder={`Ask your ${selection.subjectName} question — ${selection.boardName} style...`}
+                    maxLength={2000}
+                  />
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Submit button */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="mb-8"
+            >
+              <button
+                onClick={handleSubmit}
+                disabled={loading || !question.trim()}
+                className="group relative w-full overflow-hidden rounded-xl bg-[#0F3226] py-3.5 font-serif text-base font-semibold text-[#FDFCF9] shadow-sm transition-all hover:bg-[#1A4A36] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#FDFCF9]/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                {loading ? (
+                  <span className="relative flex items-center justify-center gap-2.5">
+                    <span className="flex gap-1">
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#FDFCF9]/60" style={{ animationDelay: "0ms" }} />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#FDFCF9]/60" style={{ animationDelay: "150ms" }} />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#FDFCF9]/60" style={{ animationDelay: "300ms" }} />
+                    </span>
+                    Generating your board-specific answer...
+                  </span>
+                ) : (
+                  <span className="relative flex items-center justify-center gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    Get Answer
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </span>
+                )}
+              </button>
+            </motion.div>
+
+            {/* Loading skeleton */}
+            <AnimatePresence>
+              {loading && (
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  className="space-y-4"
+                >
+                  <div className="overflow-hidden rounded-2xl border border-[#D6D0C4]/30 bg-[#FDFCF9] shadow-sm">
+                    <div className="flex items-center gap-3 border-b border-[#D6D0C4]/20 bg-[#0F3226] px-6 py-4">
+                      <div className="h-8 w-8 animate-pulse rounded-xl bg-[#FDFCF9]/10" />
+                      <div className="space-y-1.5">
+                        <div className="h-2.5 w-40 animate-pulse rounded bg-[#FDFCF9]/10" />
+                        <div className="h-2 w-28 animate-pulse rounded bg-[#FDFCF9]/8" />
+                      </div>
+                    </div>
+                    <div className="space-y-2.5 px-6 py-5">
+                      <div className="h-3 w-full animate-pulse rounded bg-[#D6D0C4]/30" />
+                      <div className="h-3 w-5/6 animate-pulse rounded bg-[#D6D0C4]/30" />
+                      <div className="h-3 w-4/6 animate-pulse rounded bg-[#D6D0C4]/30" />
+                      <div className="h-3 w-3/4 animate-pulse rounded bg-[#D6D0C4]/30" />
+                      <div className="h-3 w-2/3 animate-pulse rounded bg-[#D6D0C4]/30" />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 px-1">
+                    <div className="h-8 w-20 animate-pulse rounded-lg bg-[#D6D0C4]/20" />
+                    <div className="h-8 w-24 animate-pulse rounded-lg bg-[#D6D0C4]/20" />
+                    <div className="h-8 w-16 animate-pulse rounded-lg bg-[#D6D0C4]/20" />
+                  </div>
+                </motion.div>
               )}
-            </button>
+            </AnimatePresence>
 
-            {loading && (
-              <div className="animate-pulse space-y-4 rounded-xl border border-border/50 bg-card p-6 shadow-sm">
-                <div className="flex gap-1 rounded-lg bg-primary/5 p-0.5">
-                  <div className="h-7 w-20 rounded-md bg-border/60" />
-                  <div className="h-7 w-20 rounded-md bg-border/60" />
-                  <div className="h-7 w-20 rounded-md bg-border/60" />
-                </div>
-                <div className="space-y-2.5">
-                  <div className="h-4 w-full rounded bg-border/60" />
-                  <div className="h-4 w-5/6 rounded bg-border/60" />
-                  <div className="h-4 w-4/6 rounded bg-border/60" />
-                  <div className="h-4 w-3/4 rounded bg-border/60" />
-                </div>
-                <div className="rounded-lg border border-accent/20 bg-accent/5 p-4">
-                  <div className="h-3 w-24 rounded bg-border/60 mb-3" />
-                  <div className="h-4 w-full rounded bg-border/60 mb-2" />
-                  <div className="h-4 w-4/5 rounded bg-border/60" />
-                </div>
-              </div>
-            )}
+            {/* Error */}
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -8 }}
+                  className="mb-6 overflow-hidden rounded-xl border border-red-200/80 bg-[#FDFCF9] shadow-sm"
+                >
+                  <div className="flex items-start gap-3 px-5 py-4">
+                    <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-red-100">
+                      <span className="text-xs font-bold text-red-600">!</span>
+                    </span>
+                    <div>
+                      <p className="text-sm font-medium text-red-700">Unable to generate answer</p>
+                      <p className="mt-0.5 text-sm text-red-600">{error}</p>
+                    </div>
+                  </div>
+                  <div className="h-px bg-gradient-to-r from-red-200/60 via-red-200/30 to-transparent" />
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-            {error && (
-              <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50/80 p-5">
-                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-100 text-xs font-bold text-red-600">
-                  !
-                </span>
-                <div>
-                  <p className="text-sm font-medium text-red-700">Error</p>
-                  <p className="text-sm text-red-600">{error}</p>
-                </div>
-              </div>
-            )}
-
-            {response && (
-              <AnswerDisplay
-                directAnswer={response.directAnswer}
-                structureGuide={response.structureGuide}
-                commonMistakes={response.commonMistakes}
-                visuals={response.visuals}
-                sessionId={sessionId ?? undefined}
-              />
-            )}
+            {/* Answer */}
+            <AnimatePresence>
+              {response && (
+                <motion.div
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -16 }}
+                >
+                  <AnswerDisplay
+                    directAnswer={response.directAnswer}
+                    structureGuide={response.structureGuide}
+                    commonMistakes={response.commonMistakes}
+                    visuals={response.visuals}
+                    sessionId={sessionId ?? undefined}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
       </div>
 
+      {/* Sidebar — Recent Questions */}
       {!noSelection && (
         <aside className="hidden w-56 shrink-0 lg:block">
           <div className="sticky top-24">
             <div className="mb-4 flex items-center gap-2">
-              <Clock className="h-3.5 w-3.5 text-[#6B7A72]" />
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-[#6B7A72]">
-                Recent Questions
+              <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[#0F3226]/5">
+                <History className="h-3.5 w-3.5 text-[#0F3226]" />
+              </div>
+              <h3 className="text-xs font-semibold uppercase tracking-[0.1em] text-[#6B7A72]">
+                Recent
               </h3>
             </div>
             {history.length === 0 ? (
-              <p className="text-xs text-[#6B7A72]/50">
-                No questions yet.
-              </p>
+              <div className="rounded-lg border border-dashed border-[#D6D0C4]/30 px-4 py-5 text-center">
+                <Clock className="mx-auto mb-2 h-5 w-5 text-[#6B7A72]/30" />
+                <p className="text-[11px] text-[#6B7A72]/50">
+                  No questions yet
+                </p>
+              </div>
             ) : (
-              <ul className="space-y-2">
+              <div className="space-y-1">
                 {history.map((item) => (
-                  <li key={item.id}>
-                    <button
-                      onClick={() => handleRestoreQuestion(item.questionText)}
-                      className="group w-full rounded-lg px-3 py-2 text-left transition-colors hover:bg-[#0F3226]/5"
-                    >
-                      <p className="line-clamp-2 text-xs text-[#3D4F47] group-hover:text-[#0F3226]">
-                        {item.questionText}
-                      </p>
-                      <div className="mt-1 flex items-center gap-1 text-[10px] text-[#6B7A72]/50">
-                        <RotateCcw className="h-3 w-3" />
-                        Restore
-                      </div>
-                    </button>
-                  </li>
+                  <button
+                    key={item.id}
+                    onClick={() => handleRestoreQuestion(item.questionText)}
+                    className="group w-full rounded-lg border border-transparent px-3 py-2.5 text-left transition-all hover:border-[#D6D0C4]/30 hover:bg-[#FDFCF9] hover:shadow-sm"
+                  >
+                    <p className="line-clamp-2 text-xs leading-relaxed text-[#3D4F47] group-hover:text-[#0F3226]">
+                      {item.questionText}
+                    </p>
+                    <div className="mt-1.5 flex items-center gap-1 text-[10px] text-[#6B7A72]/40 group-hover:text-[#0F3226]/60">
+                      <RotateCcw className="h-3 w-3" />
+                      Restore question
+                    </div>
+                  </button>
                 ))}
-              </ul>
+              </div>
             )}
+            <div className="mt-4 h-px bg-gradient-to-r from-[#D6D0C4]/40 to-transparent" />
           </div>
         </aside>
       )}

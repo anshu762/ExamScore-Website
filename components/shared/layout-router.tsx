@@ -14,7 +14,6 @@ import {
   LogOut,
   Menu,
   X,
-  ChevronRight,
   Clock,
 } from "lucide-react";
 
@@ -114,23 +113,22 @@ export default function LayoutRouter({ children }: { children: React.ReactNode }
         <div className="mx-4 h-px bg-[#FDFCF9]/10" />
 
         <div className="px-3 py-4">
-          <div className="flex items-center gap-3 rounded-lg px-3 py-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FDFCF9]/10 text-xs font-semibold text-[#FDFCF9]/80">
+          <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-[#FDFCF9]/5">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FDFCF9]/10 text-xs font-semibold text-[#FDFCF9]/80">
               {session?.user?.name?.charAt(0)?.toUpperCase() ?? "U"}
             </div>
-            <div className="flex-1 truncate">
-              <p className="truncate text-sm text-[#FDFCF9]/90">{session?.user?.name ?? "User"}</p>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-[#FDFCF9]/90">{session?.user?.name ?? "User"}</p>
               <p className="truncate text-xs text-[#FDFCF9]/40">{session?.user?.email ?? ""}</p>
             </div>
+            <button
+              onClick={() => signOut()}
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[#FDFCF9]/30 transition-colors hover:bg-[#FDFCF9]/10 hover:text-[#FDFCF9]/60"
+              title="Sign out"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+            </button>
           </div>
-          <button
-            onClick={() => signOut()}
-            className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-[#FDFCF9]/40 transition-colors hover:bg-[#FDFCF9]/5 hover:text-[#FDFCF9]/70"
-          >
-            <LogOut className="h-4 w-4" />
-            Sign Out
-            <ChevronRight className="ml-auto h-3.5 w-3.5" />
-          </button>
         </div>
       </aside>
 
