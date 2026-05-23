@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { trackEvent } from "@/lib/analytics";
 
 export async function POST(_request: NextRequest, { params }: { params: Promise<{ sessionId: string }> }) {
   try {
@@ -49,6 +50,8 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
         source: "AI_GENERATED",
       },
     });
+
+    await trackEvent(session.user.id, "flashcard_created", { source: "AI_GENERATED" });
 
     return NextResponse.json(flashcard, { status: 201 });
   } catch (error) {

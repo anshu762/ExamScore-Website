@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { questions } from "@/lib/quiz/questions";
 import { generateProfile } from "@/lib/quiz/profiler";
+import { trackEvent } from "@/lib/analytics";
 
 const submitSchema = z.object({
   answers: z.record(z.string(), z.string().regex(/^[a-d]$/)),
@@ -48,6 +49,10 @@ export async function POST(request: Request) {
         resultProfile: resultProfile as any,
         completedAt: new Date(),
       },
+    });
+
+    await trackEvent(session.user.id, "quiz_completed", {
+      weaknesses: resultProfile.weaknesses,
     });
 
     return NextResponse.json({ resultProfile }, { status: 200 });

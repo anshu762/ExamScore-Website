@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { generateAIResponse } from "@/lib/ai/provider";
+import { trackEvent } from "@/lib/analytics";
+import { updateMetrics } from "@/lib/gamification";
 
 const answerSchema = z.object({
   boardCode: z.string().min(1, "Board code is required"),
@@ -122,6 +124,14 @@ export async function POST(request: Request) {
         },
       });
     }
+
+    await Promise.all([
+      trackEvent(session.user.id, "question_asked", {
+        boardCode: board.code.toLowerCase(),
+        subjectName: subject.name,
+      }),
+      updateMetrics(session.user.id),
+    ]);
 
     return NextResponse.json(
       {

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { trackEvent } from "@/lib/analytics";
 
 const createFolderSchema = z.object({
   name: z.string().min(1).max(60),
@@ -60,6 +61,8 @@ export async function POST(request: Request) {
       },
       include: { _count: { select: { items: true } } },
     });
+
+    await trackEvent(session.user.id, "folder_created", { folderId: folder.id });
 
     return NextResponse.json(folder, { status: 201 });
   } catch (error) {
