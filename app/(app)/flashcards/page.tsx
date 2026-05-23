@@ -53,18 +53,19 @@ export default function FlashcardsPage() {
   });
 
   const visibleCards = filtered.filter((c) => !knownIds.has(c.id));
-  const current = visibleCards[currentIndex];
+  const safeIndex = currentIndex >= visibleCards.length ? 0 : currentIndex;
+  const current = visibleCards[safeIndex] ?? null;
 
   function nextCard() {
-    if (currentIndex < visibleCards.length - 1) {
-      setCurrentIndex((i) => i + 1);
+    if (safeIndex < visibleCards.length - 1) {
+      setCurrentIndex(safeIndex + 1);
       setFlipped(false);
     }
   }
 
   function prevCard() {
-    if (currentIndex > 0) {
-      setCurrentIndex((i) => i - 1);
+    if (safeIndex > 0) {
+      setCurrentIndex(safeIndex - 1);
       setFlipped(false);
     }
   }
@@ -73,10 +74,8 @@ export default function FlashcardsPage() {
     if (current) {
       setKnownIds((prev) => new Set(prev).add(current.id));
       setFlipped(false);
-      if (currentIndex >= visibleCards.length - 1) {
-        // Stay at the same index if it was the last card
-      } else {
-        setCurrentIndex((i) => i + 1);
+      if (safeIndex < visibleCards.length - 1) {
+        setCurrentIndex(safeIndex + 1);
       }
     }
   }
@@ -216,7 +215,7 @@ export default function FlashcardsPage() {
                       Question
                     </div>
                     <div className="font-serif text-base leading-relaxed text-[#0A1A14]">
-                      <Markdown content={current.front} />
+                      {current && <Markdown content={current.front} />}
                     </div>
                     <div className="absolute bottom-4 left-0 right-0 text-center text-[10px] text-[#6B7A72]/40">
                       Tap to flip
@@ -235,7 +234,7 @@ export default function FlashcardsPage() {
                       Answer
                     </div>
                     <div className="font-serif text-base leading-relaxed text-[#FDFCF9]">
-                      <Markdown content={current.back} />
+                      {current && <Markdown content={current.back} />}
                     </div>
                     <div className="absolute bottom-4 left-0 right-0 text-center text-[10px] text-[#FDFCF9]/30">
                       Tap to flip back

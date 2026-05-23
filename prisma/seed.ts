@@ -130,26 +130,35 @@ async function main() {
   };
 
   for (const boardData of boards) {
-    const board = await prisma.board.create({
-      data: {
+    const board = await prisma.board.upsert({
+      where: { code: boardData.code },
+      update: {
+        name: boardData.name,
+        description: boardData.description,
+      },
+      create: {
         code: boardData.code,
         name: boardData.name,
         description: boardData.description,
       },
     });
 
-    console.log(`Created board: ${board.name}`);
+    console.log(`Upserted board: ${board.name}`);
 
     for (const levelData of boardData.levels) {
-      const level = await prisma.academicLevel.create({
-        data: {
+      await prisma.academicLevel.upsert({
+        where: {
+          boardId_name: { boardId: board.id, name: levelData.name },
+        },
+        update: { order: levelData.order },
+        create: {
           boardId: board.id,
           name: levelData.name,
           order: levelData.order,
         },
       });
 
-      console.log(`  Created level: ${level.name}`);
+      console.log(`  Upserted level: ${levelData.name}`);
     }
 
     const subjectNames = subjectsByBoard[boardData.code] ?? [];
@@ -159,15 +168,19 @@ async function main() {
         .replace(/\s+/g, "_")
         .replace(/[^A-Z_]/g, "");
 
-      const subject = await prisma.subject.create({
-        data: {
+      await prisma.subject.upsert({
+        where: {
+          boardId_code: { boardId: board.id, code },
+        },
+        update: { name: subjectName },
+        create: {
           boardId: board.id,
           name: subjectName,
           code,
         },
       });
 
-      console.log(`  Created subject: ${subject.name}`);
+      console.log(`  Upserted subject: ${subjectName}`);
     }
   }
 
