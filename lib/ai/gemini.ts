@@ -88,54 +88,112 @@ export class GeminiProvider implements AIProvider {
   }
 
   private parseResponse(content: string): AIResponseOutput {
-    const cleaned = this.stripMarkdownFences(content);
+    // Build a list of candidate JSON strings to try, from most to least specific.
+    const candidates: string[] = [];
 
-    try {
-      const parsed = JSON.parse(cleaned);
-      const visuals: Visual[] = Array.isArray(parsed.visuals)
-        ? parsed.visuals.map((v: any) => ({
-            description: v.description ?? "",
-            type: ["diagram", "graph", "equation", "none"].includes(v.type) ? v.type : "none",
-            hint: v.hint ?? "",
-          }))
-        : [];
+    // 1. Strip all markdown fences (handles ```json ... ``` and plain ``` ... ```)
+    const fenceStripped = this.stripMarkdownFences(content);
+    candidates.push(fenceStripped);
 
-      return {
-        directAnswer: parsed.directAnswer ?? "",
-        structureGuide: {
-          introduction: parsed.structureGuide?.introduction ?? "",
-          body: parsed.structureGuide?.body ?? "",
-          evaluation: parsed.structureGuide?.evaluation ?? null,
-          conclusion: parsed.structureGuide?.conclusion ?? "",
-          formattingNotes: parsed.structureGuide?.formattingNotes ?? "",
-          paragraphFlow: parsed.structureGuide?.paragraphFlow ?? "",
-        },
-        commonMistakes: Array.isArray(parsed.commonMistakes) ? parsed.commonMistakes : [],
-        visuals,
-      };
-    } catch {
-      return {
-        directAnswer: cleaned,
-        structureGuide: {
-          introduction: "",
-          body: "",
-          evaluation: null,
-          conclusion: "",
-          formattingNotes: "",
-          paragraphFlow: "",
-        },
-        commonMistakes: [],
-        visuals: [],
-      };
+    // 2. Extract the outermost { ... } block — handles AI adding prose before/after JSON
+    const outerBrace = content.match(/\{[\s\S]*\}/);
+    if (outerBrace) candidates.push(outerBrace[0]);
+
+    // 3. Same on the fence-stripped version
+    const innerBrace = fenceStripped.match(/\{[\s\S]*\}/);
+    if (innerBrace) candidates.push(innerBrace[0]);
+
+    for (const candidate of candidates) {
+      try {
+        const parsed = JSON.parse(candidate);
+        // Only accept if it looks like our expected schema
+        if (parsed && typeof parsed === "object" && typeof parsed.directAnswer === "string") {
+          return this.extractFromParsed(parsed);
+        }
+      } catch {
+        // Try next candidate
+      }
     }
+
+    // All parsing failed — return a safe fallback (never dump raw JSON to UI)
+    return this.makeFallback(fenceStripped);
   }
 
+  /** Map a successfully parsed object to AIResponseOutput */
+  private extractFromParsed(parsed: any): AIResponseOutput {
+    const visuals: Visual[] = Array.isArray(parsed.visuals)
+      ? parsed.visuals.map((v: any) => ({
+          description: String(v.description ?? ""),
+          type: (["diagram", "graph", "equation", "none"] as const).includes(v.type)
+            ? v.type
+            : "none",
+          hint: String(v.hint ?? ""),
+        }))
+      : [];
+
+    return {
+      directAnswer: String(parsed.directAnswer ?? ""),
+      structureGuide: {
+        introduction: String(parsed.structureGuide?.introduction ?? ""),
+        body: String(parsed.structureGuide?.body ?? ""),
+        evaluation: parsed.structureGuide?.evaluation
+          ? String(parsed.structureGuide.evaluation)
+          : null,
+        conclusion: String(parsed.structureGuide?.conclusion ?? ""),
+        formattingNotes: String(parsed.structureGuide?.formattingNotes ?? ""),
+        paragraphFlow: String(parsed.structureGuide?.paragraphFlow ?? ""),
+      },
+      commonMistakes: Array.isArray(parsed.commonMistakes)
+        ? parsed.commonMistakes.map(String)
+        : [],
+      visuals,
+    };
+  }
+
+  /**
+   * Safe fallback — called only when all JSON parse attempts fail.
+   * If the raw text looks like JSON (starts with { or [), we refuse to render it
+   * directly; instead we show a friendly retry message so the user never sees
+   * raw schema keys or escaped strings.
+   */
+  private makeFallback(raw: string): AIResponseOutput {
+    const trimmed = raw.trim();
+    const looksLikeRawJson =
+      trimmed.startsWith("{") ||
+      trimmed.startsWith("[") ||
+      /"directAnswer"/.test(trimmed) ||
+      /"structureGuide"/.test(trimmed);
+
+    return {
+      directAnswer: looksLikeRawJson
+        ? "The AI response could not be parsed into a structured answer. Please try submitting your question again."
+        : trimmed,
+      structureGuide: {
+        introduction: "",
+        body: "",
+        evaluation: null,
+        conclusion: "",
+        formattingNotes: "",
+        paragraphFlow: "",
+      },
+      commonMistakes: [],
+      visuals: [],
+    };
+  }
+
+  /**
+   * Strip markdown code fences from AI output.
+   * Handles all variants the model may produce:
+   *   ```json\n{...}\n```
+   *   ```\n{...}\n```
+   *   {... bare JSON ...}
+   */
   private stripMarkdownFences(text: string): string {
     let cleaned = text.trim();
-    if (cleaned.startsWith("```")) {
-      cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, "");
-      cleaned = cleaned.replace(/\n?```\s*$/, "");
-    }
+    // Remove leading fence (with or without language hint)
+    cleaned = cleaned.replace(/^```(?:json|JSON)?\s*\n?/, "");
+    // Remove trailing fence
+    cleaned = cleaned.replace(/\n?```\s*$/, "");
     return cleaned.trim();
   }
 }

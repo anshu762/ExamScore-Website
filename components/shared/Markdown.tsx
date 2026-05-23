@@ -1,4 +1,6 @@
 "use client";
+// Math rendering: react-markdown + remark-math + rehype-katex
+// "use client" is required — rehype-katex uses browser APIs for KaTeX rendering
 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
