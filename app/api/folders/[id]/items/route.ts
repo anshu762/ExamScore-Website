@@ -39,6 +39,17 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
               createdAt: true,
               subject: { select: { name: true } },
               board: { select: { name: true } },
+              level: { select: { name: true } },
+              aiResponse: {
+                select: {
+                  id: true,
+                  directAnswer: true,
+                  structureGuide: true,
+                  commonMistakes: true,
+                  visuals: true,
+                  createdAt: true,
+                },
+              },
             },
           });
           data = qs;
