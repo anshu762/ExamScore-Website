@@ -14,10 +14,15 @@ import {
   Star,
   ArrowRight,
   Sparkles,
+  Loader2,
+  ChevronDown,
+  Eye,
+  Layout,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Visual } from "@/lib/ai/types";
 import { Markdown } from "./Markdown";
+import { FolderSelectorModal } from "./FolderSelectorModal";
 
 interface AnswerDisplayProps {
   directAnswer: string;
@@ -34,23 +39,134 @@ interface AnswerDisplayProps {
   sessionId?: string;
 }
 
-type TabId = "answer" | "guide" | "mistakes";
+interface GuideSection {
+  key: string;
+  title: string;
+  content: string | null | undefined;
+  icon: React.ElementType;
+  accentColor: string;
+  borderColor: string;
+  bgColor: string;
+  labelColor: string;
+}
 
-const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
-  { id: "answer", label: "Direct Answer", icon: BookOpen },
-  { id: "guide", label: "Structure Guide", icon: PenLine },
-  { id: "mistakes", label: "Common Mistakes", icon: AlertTriangle },
-];
-
-const SECTION_META: Record<string, { icon: React.ElementType; accent: string }> = {
-  Introduction: { icon: Star, accent: "from-emerald-500/10 to-transparent" },
-  Body: { icon: ArrowRight, accent: "from-amber-500/10 to-transparent" },
-  Evaluation: { icon: BarChart3, accent: "from-blue-500/10 to-transparent" },
-  Conclusion: { icon: Check, accent: "from-purple-500/10 to-transparent" },
-  "Formatting Notes": { icon: Lightbulb, accent: "from-pink-500/10 to-transparent" },
-  "Paragraph Flow": { icon: PenLine, accent: "from-teal-500/10 to-transparent" },
+// ── Card entrance animation ─────────────────────────────────────────────────
+const cardVariants = {
+  hidden: { opacity: 0, y: 18 },
+  show: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.35, delay: i * 0.07, ease: [0.25, 0.1, 0.25, 1] as const },
+  }),
 };
 
+// ── Section accordion item ───────────────────────────────────────────────────
+function AccordionSection({ section, defaultOpen }: { section: GuideSection; defaultOpen: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
+  const Icon = section.icon;
+
+  return (
+    <div className={`overflow-hidden rounded-xl border ${section.borderColor} ${section.bgColor}`}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-3 px-5 py-3.5 text-left transition-colors hover:bg-black/[0.02]"
+      >
+        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${section.accentColor}`}>
+          <Icon className="h-3.5 w-3.5" />
+        </span>
+        <span className="flex-1 font-serif text-sm font-semibold text-[#0A1A14]">
+          {section.title}
+        </span>
+        <ChevronDown
+          className={`h-4 w-4 shrink-0 text-[#6B7A72] transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="content"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="border-t border-[#D6D0C4]/30 px-5 pb-4 pt-3.5">
+              <div className={`text-sm leading-relaxed ${section.labelColor}`}>
+                <Markdown content={section.content ?? ""} />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ── Visual aid card ──────────────────────────────────────────────────────────
+function VisualCard({ visual, index }: { visual: Visual; index: number }) {
+  const typeConfig = {
+    graph: {
+      icon: BarChart3,
+      badge: "bg-blue-50 text-blue-600 border-blue-100",
+      label: "Graph",
+    },
+    diagram: {
+      icon: Eye,
+      badge: "bg-amber-50 text-amber-600 border-amber-100",
+      label: "Diagram",
+    },
+    equation: {
+      icon: Layout,
+      badge: "bg-emerald-50 text-emerald-600 border-emerald-100",
+      label: "Equation",
+    },
+    none: {
+      icon: Lightbulb,
+      badge: "bg-gray-50 text-gray-500 border-gray-100",
+      label: "Visual",
+    },
+  };
+
+  const config = typeConfig[visual.type] ?? typeConfig.none;
+  const TypeIcon = config.icon;
+
+  return (
+    <motion.div
+      variants={cardVariants}
+      custom={index}
+      className="overflow-hidden rounded-xl border border-[#D6D0C4]/50 bg-[#FDFCF9] shadow-sm"
+    >
+      {/* Card header */}
+      <div className="flex items-center gap-2.5 border-b border-[#D6D0C4]/30 px-4 py-3">
+        <TypeIcon className="h-4 w-4 text-[#0F3226]/60" />
+        <span
+          className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${config.badge}`}
+        >
+          {config.label}
+        </span>
+      </div>
+
+      {/* Description */}
+      <div className="px-4 py-3 text-sm leading-relaxed text-[#3D4F47]">
+        <Markdown content={visual.description} />
+      </div>
+
+      {/* How to draw hint */}
+      {visual.hint && (
+        <div className="mx-4 mb-4 rounded-lg bg-[#0F3226]/[0.04] px-3.5 py-2.5">
+          <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#0F3226]/50">
+            How to draw
+          </p>
+          <p className="text-xs italic leading-relaxed text-[#6B7A72]">{visual.hint}</p>
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
+// ── Main component ───────────────────────────────────────────────────────────
 export function AnswerDisplay({
   directAnswer,
   structureGuide,
@@ -58,9 +174,73 @@ export function AnswerDisplay({
   visuals,
   sessionId,
 }: AnswerDisplayProps) {
-  const [activeTab, setActiveTab] = useState<TabId>("answer");
+  const [folderModalOpen, setFolderModalOpen] = useState(false);
+  const [flashcardSaving, setFlashcardSaving] = useState(false);
 
-  const hasVisuals = visuals.some((v) => v.type !== "none");
+  const hasVisuals = Array.isArray(visuals) && visuals.some((v) => v.type !== "none");
+
+  const guideSections: GuideSection[] = [
+    {
+      key: "introduction",
+      title: "Introduction",
+      content: structureGuide.introduction,
+      icon: Star,
+      accentColor: "bg-emerald-50 text-emerald-600",
+      borderColor: "border-emerald-100/60",
+      bgColor: "bg-white",
+      labelColor: "text-[#3D4F47]",
+    },
+    {
+      key: "body",
+      title: "Body",
+      content: structureGuide.body,
+      icon: PenLine,
+      accentColor: "bg-amber-50 text-amber-600",
+      borderColor: "border-amber-100/60",
+      bgColor: "bg-white",
+      labelColor: "text-[#3D4F47]",
+    },
+    {
+      key: "evaluation",
+      title: "Evaluation",
+      content: structureGuide.evaluation,
+      icon: BarChart3,
+      accentColor: "bg-blue-50 text-blue-600",
+      borderColor: "border-blue-100/60",
+      bgColor: "bg-white",
+      labelColor: "text-[#3D4F47]",
+    },
+    {
+      key: "conclusion",
+      title: "Conclusion",
+      content: structureGuide.conclusion,
+      icon: Check,
+      accentColor: "bg-purple-50 text-purple-600",
+      borderColor: "border-purple-100/60",
+      bgColor: "bg-white",
+      labelColor: "text-[#3D4F47]",
+    },
+    {
+      key: "formattingNotes",
+      title: "Formatting Notes",
+      content: structureGuide.formattingNotes,
+      icon: Lightbulb,
+      accentColor: "bg-pink-50 text-pink-600",
+      borderColor: "border-pink-100/60",
+      bgColor: "bg-white",
+      labelColor: "text-[#3D4F47]",
+    },
+    {
+      key: "paragraphFlow",
+      title: "Paragraph Flow",
+      content: structureGuide.paragraphFlow,
+      icon: ArrowRight,
+      accentColor: "bg-teal-50 text-teal-600",
+      borderColor: "border-teal-100/60",
+      bgColor: "bg-white",
+      labelColor: "text-[#3D4F47]",
+    },
+  ].filter((s) => s.content) as GuideSection[];
 
   function handleCopy() {
     const text = [directAnswer, structureGuide.introduction, structureGuide.body]
@@ -70,254 +250,206 @@ export function AnswerDisplay({
     toast.success("Answer copied to clipboard");
   }
 
-  function handleSaveToFolder() {
-    toast.success("Saved to folder (stub)");
-  }
-
-  function handleCreateFlashcard() {
-    toast.success("Flashcard created (stub)");
+  async function handleCreateFlashcard() {
+    if (!sessionId) {
+      toast.error("No session available");
+      return;
+    }
+    setFlashcardSaving(true);
+    try {
+      const res = await fetch(`/api/flashcards/from-session/${sessionId}`, { method: "POST" });
+      if (!res.ok) throw new Error();
+      toast.success("Flashcard created");
+    } catch {
+      toast.error("Failed to create flashcard");
+    } finally {
+      setFlashcardSaving(false);
+    }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="relative flex gap-1 rounded-2xl bg-[#0F3226]/5 p-1.5">
-        <div className="absolute inset-x-1.5 top-0 h-px bg-gradient-to-r from-transparent via-[#0F3226]/20 to-transparent" />
-        {TABS.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`relative flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
-                isActive
-                  ? "bg-[#FDFCF9] text-[#0F3226] shadow-md shadow-black/5"
-                  : "text-[#6B7A72] hover:bg-[#0F3226]/[0.04] hover:text-[#0F3226]"
-              }`}
-            >
-              <Icon className={`h-4 w-4 ${isActive ? "" : "opacity-60"}`} />
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
+    <motion.div
+      initial="hidden"
+      animate="show"
+      className="space-y-5 pb-24"
+    >
 
-      <AnimatePresence mode="wait">
-        {activeTab === "answer" && (
-          <motion.div
-            key="answer"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="relative overflow-hidden rounded-2xl border border-[#D6D0C4]/40 bg-[#FDFCF9] shadow-sm">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#0F3226]/[0.02] to-transparent" />
-              <div className="relative px-7 py-6">
-                <div className="mb-5 flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#0F3226] text-[#FDFCF9]">
-                    <Sparkles className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-widest text-[#0F3226]/50">
-                      Examiner's Model Answer
-                    </p>
-                    <p className="text-xs text-[#6B7A72]">
-                      What examiners expect to see
-                    </p>
-                  </div>
-                </div>
-                <div className="font-serif leading-relaxed text-[#3D4F47]">
-                  <Markdown content={directAnswer} />
-                </div>
-              </div>
+      {/* ── CARD 1: Direct Answer ─────────────────────────────────────── */}
+      <motion.div variants={cardVariants} custom={0}>
+        <div className="overflow-hidden rounded-2xl border border-[#D6D0C4]/50 bg-[#FDFCF9] shadow-sm">
+          {/* Card header strip */}
+          <div className="flex items-center gap-3 border-b border-[#D6D0C4]/30 bg-[#0F3226] px-6 py-4">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#FDFCF9]/10">
+              <Sparkles className="h-4 w-4 text-[#C9A84C]" />
             </div>
-          </motion.div>
-        )}
-
-        {activeTab === "guide" && (
-          <motion.div
-            key="guide"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="space-y-4"
-          >
-            {(
-              [
-                { title: "Introduction", content: structureGuide.introduction },
-                { title: "Body", content: structureGuide.body },
-                { title: "Evaluation", content: structureGuide.evaluation },
-                { title: "Conclusion", content: structureGuide.conclusion },
-                { title: "Formatting Notes", content: structureGuide.formattingNotes },
-                { title: "Paragraph Flow", content: structureGuide.paragraphFlow },
-              ] as const
-            )
-              .filter((s) => s.content)
-              .map((section, idx) => {
-                const meta = SECTION_META[section.title] ?? {
-                  icon: PenLine,
-                  accent: "from-gray-500/10 to-transparent",
-                };
-                const Icon = meta.icon;
-                return (
-                  <motion.div
-                    key={section.title}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.05, duration: 0.2 }}
-                    className="relative overflow-hidden rounded-2xl border border-[#D6D0C4]/40 bg-[#FDFCF9] shadow-sm"
-                  >
-                    <div
-                      className={`absolute inset-0 bg-gradient-to-br ${meta.accent}`}
-                    />
-                    <div className="relative px-6 py-5">
-                      <div className="mb-3 flex items-center gap-2">
-                        <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#0F3226]/5">
-                          <Icon className="h-3.5 w-3.5 text-[#0F3226]" />
-                        </div>
-                        <h4 className="font-serif text-sm font-semibold text-[#0A1A14]">
-                          {section.title}
-                        </h4>
-                      </div>
-                      <div className="text-sm leading-relaxed text-[#3D4F47]">
-                        <Markdown content={section.content ?? ""} />
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-          </motion.div>
-        )}
-
-        {activeTab === "mistakes" && (
-          <motion.div
-            key="mistakes"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="relative overflow-hidden rounded-2xl border border-red-200/60 bg-[#FDFCF9] shadow-sm">
-              <div className="absolute inset-0 bg-gradient-to-br from-red-500/[0.02] to-transparent" />
-              <div className="relative px-7 py-6">
-                <div className="mb-5 flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-50 text-red-600">
-                    <AlertTriangle className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-widest text-red-500/60">
-                      Pitfalls
-                    </p>
-                    <p className="text-xs text-[#6B7A72]">
-                      Mistakes that cost marks
-                    </p>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  {commonMistakes.map((mistake, i) => (
-                    <div
-                      key={i}
-                      className="flex items-start gap-3 rounded-xl border border-red-100/50 bg-red-50/30 px-4 py-3"
-                    >
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-100 text-[11px] font-bold text-red-600">
-                        {i + 1}
-                      </span>
-                      <p className="text-sm leading-relaxed text-[#3D4F47]">
-                        {mistake}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-[#FDFCF9]/50">
+                Examiner's Model Answer
+              </p>
+              <p className="text-xs font-medium text-[#FDFCF9]/80">
+                Board-aligned, structured response
+              </p>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
 
-      {hasVisuals && (
-        <div className="space-y-3">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-[#0F3226]/40">
-            Visual Aids
-          </p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {visuals
-              .filter((v) => v.type !== "none")
-              .map((v, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                  className="group relative overflow-hidden rounded-2xl border border-[#D6D0C4]/40 bg-[#FDFCF9] p-5 shadow-sm transition-all hover:shadow-md"
-                >
-                  <div className="mb-3 flex items-center gap-2">
-                    <div
-                      className={`flex h-8 w-8 items-center justify-center rounded-xl ${
-                        v.type === "graph"
-                          ? "bg-blue-50 text-blue-600"
-                          : v.type === "diagram"
-                            ? "bg-amber-50 text-amber-600"
-                            : "bg-emerald-50 text-emerald-600"
-                      }`}
-                    >
-                      {v.type === "graph" ? (
-                        <BarChart3 className="h-4 w-4" />
-                      ) : v.type === "diagram" ? (
-                        <PenLine className="h-4 w-4" />
-                      ) : (
-                        <Lightbulb className="h-4 w-4" />
-                      )}
-                    </div>
-                    <span className="text-[10px] font-semibold uppercase tracking-widest text-[#0F3226]/50">
-                      {v.type}
-                    </span>
-                  </div>
-                  <div className="mb-3 text-sm leading-relaxed text-[#3D4F47]">
-                    <Markdown content={v.description} />
-                  </div>
-                  <div className="rounded-xl bg-[#0F3226]/[0.03] px-3.5 py-2.5">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-[#0F3226]/50">
-                      How to draw
-                    </p>
-                    <p className="mt-0.5 text-sm italic text-[#6B7A72]">
-                      {v.hint}
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
+          {/* Answer content */}
+          <div className="px-6 py-5">
+            <div className="answer-prose">
+              <Markdown content={directAnswer} />
+            </div>
           </div>
         </div>
+      </motion.div>
+
+      {/* ── CARD 2: Structure Guide ───────────────────────────────────── */}
+      {guideSections.length > 0 && (
+        <motion.div variants={cardVariants} custom={1}>
+          <div className="overflow-hidden rounded-2xl border border-[#D6D0C4]/50 bg-[#FDFCF9] shadow-sm">
+            {/* Card header */}
+            <div className="flex items-center gap-3 border-b border-[#D6D0C4]/30 px-6 py-4">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#0F3226]/5 ring-1 ring-[#0F3226]/10">
+                <BookOpen className="h-4 w-4 text-[#0F3226]" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-[#0F3226]/40">
+                  Structure Guide
+                </p>
+                <p className="text-xs text-[#6B7A72]">
+                  How to structure your exam answer
+                </p>
+              </div>
+            </div>
+
+            {/* Accordion sections */}
+            <div className="space-y-2 p-4">
+              {guideSections.map((section, i) => (
+                <AccordionSection
+                  key={section.key}
+                  section={section}
+                  defaultOpen={i === 0}
+                />
+              ))}
+            </div>
+          </div>
+        </motion.div>
       )}
 
-      <div className="sticky bottom-0 -mx-1 rounded-2xl border border-[#D6D0C4]/30 bg-[#FDFCF9]/90 px-5 py-3.5 shadow-lg shadow-black/[0.02] backdrop-blur-xl">
-        <div className="flex items-center justify-center gap-1.5">
+      {/* ── CARD 3: Visual Aids ───────────────────────────────────────── */}
+      {hasVisuals && (
+        <motion.div variants={cardVariants} custom={2}>
+          <div className="overflow-hidden rounded-2xl border border-[#D6D0C4]/50 bg-[#FDFCF9] shadow-sm">
+            {/* Card header */}
+            <div className="flex items-center gap-3 border-b border-[#D6D0C4]/30 px-6 py-4">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 ring-1 ring-amber-100">
+                <Eye className="h-4 w-4 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-amber-600/60">
+                  Visual Aids
+                </p>
+                <p className="text-xs text-[#6B7A72]">
+                  Diagrams, graphs and equations
+                </p>
+              </div>
+            </div>
+
+            {/* Visuals grid */}
+            <div className="grid gap-3 p-4 sm:grid-cols-2">
+              {visuals
+                .filter((v) => v.type !== "none")
+                .map((v, i) => (
+                  <VisualCard key={i} visual={v} index={i} />
+                ))}
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* ── CARD 4: Common Mistakes ───────────────────────────────────── */}
+      {commonMistakes.length > 0 && (
+        <motion.div variants={cardVariants} custom={3}>
+          <div className="overflow-hidden rounded-2xl border border-red-200/60 bg-[#FDFCF9] shadow-sm">
+            {/* Card header */}
+            <div className="flex items-center gap-3 border-b border-red-100/60 bg-red-50/40 px-6 py-4">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-100 ring-1 ring-red-200">
+                <AlertTriangle className="h-4 w-4 text-red-600" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-red-500/70">
+                  Common Mistakes
+                </p>
+                <p className="text-xs text-[#6B7A72]">
+                  Pitfalls that cost marks in exams
+                </p>
+              </div>
+            </div>
+
+            {/* Mistake list */}
+            <div className="space-y-2.5 p-4">
+              {commonMistakes.map((mistake, i) => (
+                <div
+                  key={i}
+                  className="flex items-start gap-3 rounded-xl border border-red-100/50 bg-red-50/30 px-4 py-3"
+                >
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-100 text-[11px] font-bold text-red-600">
+                    {i + 1}
+                  </span>
+                  <div className="text-sm leading-relaxed text-[#3D4F47]">
+                    <Markdown content={mistake} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* ── Fixed Action Bar ──────────────────────────────────────────── */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#FDFCF9]/5 bg-[#0F3226]/95 px-5 py-3.5 shadow-2xl backdrop-blur-md">
+        <div className="mx-auto flex max-w-5xl items-center justify-center gap-1.5">
           <button
-            onClick={handleSaveToFolder}
-            className="flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-medium text-[#6B7A72] transition-all hover:bg-[#0F3226]/5 hover:text-[#0F3226] active:scale-[0.97]"
+            onClick={() => setFolderModalOpen(true)}
+            className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-medium text-[#FDFCF9]/70 transition-all hover:bg-[#FDFCF9]/10 hover:text-[#FDFCF9] active:scale-[0.97]"
           >
             <FolderPlus className="h-3.5 w-3.5" />
             Save
           </button>
-          <div className="h-5 w-px bg-[#D6D0C4]/40" />
+
+          <div className="h-4 w-px bg-[#FDFCF9]/10" />
+
           <button
             onClick={handleCreateFlashcard}
-            className="flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-medium text-[#6B7A72] transition-all hover:bg-[#0F3226]/5 hover:text-[#0F3226] active:scale-[0.97]"
+            disabled={flashcardSaving}
+            className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-medium text-[#FDFCF9]/70 transition-all hover:bg-[#FDFCF9]/10 hover:text-[#FDFCF9] active:scale-[0.97] disabled:opacity-40"
           >
-            <Check className="h-3.5 w-3.5" />
+            {flashcardSaving ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Check className="h-3.5 w-3.5" />
+            )}
             Flashcard
           </button>
-          <div className="h-5 w-px bg-[#D6D0C4]/40" />
+
+          <div className="h-4 w-px bg-[#FDFCF9]/10" />
+
           <button
             onClick={handleCopy}
-            className="flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-medium text-[#6B7A72] transition-all hover:bg-[#0F3226]/5 hover:text-[#0F3226] active:scale-[0.97]"
+            className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-medium text-[#FDFCF9]/70 transition-all hover:bg-[#FDFCF9]/10 hover:text-[#FDFCF9] active:scale-[0.97]"
           >
             <Copy className="h-3.5 w-3.5" />
             Copy
           </button>
         </div>
       </div>
-    </div>
+
+      {/* Folder modal */}
+      {sessionId && (
+        <FolderSelectorModal
+          open={folderModalOpen}
+          onClose={() => setFolderModalOpen(false)}
+          sessionId={sessionId}
+        />
+      )}
+    </motion.div>
   );
 }

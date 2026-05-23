@@ -57,28 +57,34 @@ export async function POST(request: Request) {
         levelName: level.name,
         subjectName: subject.name,
       });
-    } catch (aiError) {
-      console.error("AI generation failed:", aiError);
+    } catch (aiError: any) {
+      console.error("AI generation failed:", aiError?.message ?? aiError);
+      const isRateLimit = aiError?.message?.includes("quota") || aiError?.message?.includes("429") || aiError?.status === 429;
+      const isTimeout = aiError?.name === "AbortError" || aiError?.message?.includes("timeout") || aiError?.message?.includes("abort");
+      const isOverload = aiError?.status === 503;
+
+      let msg: string;
+      if (isRateLimit) {
+        msg = "The AI service is currently at capacity due to high demand. Please wait a moment and try again.";
+      } else if (isTimeout) {
+        msg = "The AI service took too long to respond. Please try a shorter or more specific question.";
+      } else if (isOverload) {
+        msg = "The AI service is temporarily overloaded. Please try again shortly.";
+      } else {
+        msg = "I encountered an issue while generating your answer. Please try submitting your question again.";
+      }
+
       aiResponse = {
-        directAnswer:
-          "I understand you're asking about this topic. To provide a comprehensive answer, please ensure your AI provider API key is configured. Here's a structured approach: Start by identifying key concepts, then build your argument with specific examples, and conclude with a summary of main points.",
+        directAnswer: msg,
         structureGuide: {
-          introduction:
-            "Begin with a clear thesis statement that directly addresses the question.",
-          body: "Develop your argument in 3-4 paragraphs, each focusing on a single main point with supporting evidence.",
+          introduction: "",
+          body: "",
           evaluation: null,
-          conclusion:
-            "Summarize your main argument and restate your thesis in light of the evidence presented.",
-          formattingNotes:
-            "Use clear paragraph breaks and maintain formal academic language throughout.",
-          paragraphFlow:
-            "Each paragraph should transition smoothly to the next using connecting phrases.",
+          conclusion: "",
+          formattingNotes: "",
+          paragraphFlow: "",
         },
-        commonMistakes: [
-          "Not directly answering the question asked",
-          "Lack of specific examples or evidence",
-          "Poor time management in exam conditions",
-        ],
+        commonMistakes: [],
         visuals: [],
       };
     }
@@ -130,7 +136,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("AI answer API error:", error);
     return NextResponse.json(
-      { error: "Failed to process your question" },
+      { error: "Something went wrong. Please try again." },
       { status: 500 }
     );
   }
