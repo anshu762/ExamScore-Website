@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -48,6 +48,19 @@ export default function FoldersPage() {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(null);
+      }
+    }
+    if (menuOpen) {
+      document.addEventListener("mousedown", handleClick);
+    }
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [menuOpen]);
 
   const fetchFolders = useCallback(async () => {
     try {
@@ -145,7 +158,7 @@ export default function FoldersPage() {
                     >
                       <Icon className="h-5 w-5" />
                     </div>
-                    <div className="relative">
+                    <div className="relative" ref={menuOpen === f.id ? menuRef : undefined}>
                       <button
                         onClick={(e) => { e.stopPropagation(); setMenuOpen(menuOpen === f.id ? null : f.id); }}
                         className="flex h-8 w-8 items-center justify-center rounded-lg text-[#6B7A72]/50 opacity-0 transition-all hover:bg-[#0F3226]/5 hover:text-[#6B7A72] group-hover:opacity-100"

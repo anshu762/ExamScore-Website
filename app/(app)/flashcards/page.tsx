@@ -9,7 +9,6 @@ import {
   ChevronRight,
   RotateCcw,
   CheckCircle2,
-  Loader2,
   Filter,
 } from "lucide-react";
 import { Markdown } from "@/components/shared/Markdown";
@@ -88,8 +87,33 @@ export default function FlashcardsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-[#0F3226]/50" />
+      <div className="animate-pulse space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="h-5 w-16 rounded bg-border/60" />
+            <div className="h-4 w-32 rounded bg-border/60" />
+          </div>
+          <div className="h-8 w-20 rounded-lg bg-border/60" />
+        </div>
+        <div className="mx-auto w-full max-w-lg">
+          <div className="mb-4 flex items-center justify-between">
+            <div className="h-3 w-20 rounded bg-border/60" />
+            <div className="h-3 w-16 rounded bg-border/60" />
+          </div>
+          <div className="rounded-2xl border border-border/40 bg-card p-6 shadow-sm" style={{ minHeight: "280px" }}>
+            <div className="mb-3 h-3 w-16 rounded bg-border/60" />
+            <div className="space-y-2">
+              <div className="h-4 w-full rounded bg-border/60" />
+              <div className="h-4 w-5/6 rounded bg-border/60" />
+              <div className="h-4 w-4/6 rounded bg-border/60" />
+            </div>
+          </div>
+          <div className="mt-6 flex items-center justify-center gap-3">
+            <div className="h-10 w-24 rounded-xl bg-border/60" />
+            <div className="h-10 w-24 rounded-xl bg-border/60" />
+            <div className="h-10 w-24 rounded-xl bg-border/60" />
+          </div>
+        </div>
       </div>
     );
   }

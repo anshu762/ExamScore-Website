@@ -183,12 +183,23 @@ export default function AskPage() {
             </button>
 
             {loading && (
-              <div className="space-y-4 rounded-xl border border-[#D6D0C4]/50 bg-[#FDFCF9] p-6 shadow-sm">
-                <div className="h-5 w-3/4 animate-pulse rounded bg-[#D6D0C4]/30" />
-                <div className="h-5 w-1/2 animate-pulse rounded bg-[#D6D0C4]/30" />
-                <div className="h-24 w-full animate-pulse rounded bg-[#D6D0C4]/30" />
-                <div className="h-5 w-2/3 animate-pulse rounded bg-[#D6D0C4]/30" />
-                <div className="h-5 w-5/6 animate-pulse rounded bg-[#D6D0C4]/30" />
+              <div className="animate-pulse space-y-4 rounded-xl border border-border/50 bg-card p-6 shadow-sm">
+                <div className="flex gap-1 rounded-lg bg-primary/5 p-0.5">
+                  <div className="h-7 w-20 rounded-md bg-border/60" />
+                  <div className="h-7 w-20 rounded-md bg-border/60" />
+                  <div className="h-7 w-20 rounded-md bg-border/60" />
+                </div>
+                <div className="space-y-2.5">
+                  <div className="h-4 w-full rounded bg-border/60" />
+                  <div className="h-4 w-5/6 rounded bg-border/60" />
+                  <div className="h-4 w-4/6 rounded bg-border/60" />
+                  <div className="h-4 w-3/4 rounded bg-border/60" />
+                </div>
+                <div className="rounded-lg border border-accent/20 bg-accent/5 p-4">
+                  <div className="h-3 w-24 rounded bg-border/60 mb-3" />
+                  <div className="h-4 w-full rounded bg-border/60 mb-2" />
+                  <div className="h-4 w-4/5 rounded bg-border/60" />
+                </div>
               </div>
             )}
 
