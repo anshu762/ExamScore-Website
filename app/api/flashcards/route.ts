@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { trackEvent } from "@/lib/analytics";
 
 const createFlashcardSchema = z.object({
   front: z.string().min(1).max(1000),
@@ -60,6 +61,8 @@ export async function POST(request: Request) {
         source: parsed.data.source,
       },
     });
+
+    await trackEvent(session.user.id, "flashcard_created", { source: parsed.data.source });
 
     return NextResponse.json(flashcard, { status: 201 });
   } catch (error) {

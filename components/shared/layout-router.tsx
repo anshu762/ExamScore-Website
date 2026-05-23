@@ -22,6 +22,7 @@ const navItems = [
   { href: "/ask", label: "Ask Question", icon: Sparkles },
   { href: "/folders", label: "My Folders", icon: FolderKanban },
   { href: "/flashcards", label: "Flashcards", icon: Brain },
+  { href: "/history", label: "History", icon: BarChart3 },
   { href: "/progress", label: "Progress", icon: BarChart3 },
 ];
 
