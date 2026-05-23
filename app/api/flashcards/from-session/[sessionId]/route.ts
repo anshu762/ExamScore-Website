@@ -25,9 +25,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ error: "No AI response for this session" }, { status: 400 });
     }
 
-    const backText = qs.aiResponse.directAnswer.length > 500
-      ? qs.aiResponse.directAnswer.slice(0, 500) + "..."
-      : qs.aiResponse.directAnswer;
+    const backText = qs.aiResponse.directAnswer;
 
     const existing = await prisma.flashcard.findFirst({
       where: {

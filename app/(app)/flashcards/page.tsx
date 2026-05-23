@@ -202,7 +202,7 @@ export default function FlashcardsPage() {
       </div>
 
       <div className="flex justify-center">
-        <div className="w-full max-w-lg">
+        <div className="w-full max-w-xl">
           <div className="mb-4 flex items-center justify-between text-xs text-[#6B7A72]">
             <span>{currentIndex + 1} of {visibleCards.length}</span>
             <span>{knownIds.size} known</span>
@@ -227,40 +227,44 @@ export default function FlashcardsPage() {
                   style={{
                     transformStyle: "preserve-3d",
                     transform: flipped ? "rotateY(180deg)" : "",
-                    minHeight: "280px",
+                    minHeight: "300px",
                   }}
                 >
                   {/* Front */}
                   <div
-                    className="absolute inset-0 rounded-2xl border border-[#D6D0C4]/40 bg-[#FDFCF9] p-6 shadow-sm"
+                    className="absolute inset-0 flex flex-col rounded-2xl border border-[#D6D0C4]/40 bg-[#FDFCF9] shadow-sm"
                     style={{ backfaceVisibility: "hidden" }}
                   >
-                    <div className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-[#0F3226]/40">
-                      Question
+                    <div className="flex-1 overflow-y-auto px-6 pt-6 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+                      <div className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-[#0F3226]/40">
+                        Question
+                      </div>
+                      <div className="font-serif text-base leading-relaxed text-[#0A1A14]">
+                        {current && <Markdown content={current.front} />}
+                      </div>
                     </div>
-                    <div className="font-serif text-base leading-relaxed text-[#0A1A14]">
-                      {current && <Markdown content={current.front} />}
-                    </div>
-                    <div className="absolute bottom-4 left-0 right-0 text-center text-[10px] text-[#6B7A72]/40">
+                    <div className="text-center text-[10px] text-[#6B7A72]/40 bg-[#FDFCF9] py-2">
                       Tap to flip
                     </div>
                   </div>
 
                   {/* Back */}
                   <div
-                    className="absolute inset-0 rounded-2xl border border-[#0F3226]/20 bg-[#0F3226] p-6 shadow-sm"
+                    className="absolute inset-0 flex flex-col rounded-2xl border border-[#0F3226]/20 bg-[#0F3226] shadow-sm"
                     style={{
                       backfaceVisibility: "hidden",
                       transform: "rotateY(180deg)",
                     }}
                   >
-                    <div className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-[#FDFCF9]/40">
-                      Answer
+                    <div className="flex-1 overflow-y-auto px-6 pt-6 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+                      <div className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-[#FDFCF9]/40">
+                        Answer
+                      </div>
+                      <div className="font-serif text-base leading-relaxed text-[#FDFCF9] [&_*]:text-[#FDFCF9] [&_strong]:text-[#FDFCF9] [&_code]:text-[#FDFCF9] [&_code]:bg-[#FDFCF9]/10 [&_th]:text-[#FDFCF9] [&_td]:text-[#FDFCF9] break-words">
+                        {current && <Markdown content={current.back} />}
+                      </div>
                     </div>
-                    <div className="font-serif text-base leading-relaxed text-[#FDFCF9]">
-                      {current && <Markdown content={current.back} />}
-                    </div>
-                    <div className="absolute bottom-4 left-0 right-0 text-center text-[10px] text-[#FDFCF9]/30">
+                    <div className="text-center text-[10px] text-[#FDFCF9]/30 bg-[#0F3226] py-2">
                       Tap to flip back
                     </div>
                   </div>
