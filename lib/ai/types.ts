@@ -8,8 +8,15 @@ export interface AIProviderConfig {
 export interface AIQuestionInput {
   questionText: string;
   boardName: string;
+  boardCode: string;
   levelName: string;
   subjectName: string;
+}
+
+export interface Visual {
+  description: string;
+  type: "diagram" | "graph" | "equation" | "none";
+  hint: string;
 }
 
 export interface AIResponseOutput {
@@ -17,13 +24,13 @@ export interface AIResponseOutput {
   structureGuide: {
     introduction: string;
     body: string;
-    evaluation?: string;
-    conclusion?: string;
+    evaluation?: string | null;
+    conclusion: string;
     formattingNotes: string;
     paragraphFlow: string;
   };
   commonMistakes: string[];
-  visuals: string[];
+  visuals: Visual[];
 }
 
 export interface AIProvider {

@@ -1,8 +1,19 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { questionSchema } from "@/lib/validators/auth";
+import { z } from "zod";
 import { generateAIResponse } from "@/lib/ai/provider";
+
+const answerSchema = z.object({
+  boardCode: z.string().min(1, "Board code is required"),
+  boardId: z.string().min(1, "Board ID is required"),
+  levelId: z.string().min(1, "Level ID is required"),
+  subjectId: z.string().min(1, "Subject ID is required"),
+  questionText: z
+    .string()
+    .min(5, "Question must be at least 5 characters")
+    .max(2000, "Question must be at most 2000 characters"),
+});
 
 export async function POST(request: Request) {
   try {
@@ -12,37 +23,20 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const parsed = questionSchema.safeParse(body);
+    const parsed = answerSchema.safeParse(body);
 
     if (!parsed.success) {
-      const issues = "issues" in parsed.error ? parsed.error.issues : (parsed.error as any).errors ?? [];
+      const first = parsed.error.issues[0];
       return NextResponse.json(
-        { error: issues[0]?.message ?? "Invalid input" },
+        { error: first?.message ?? "Invalid input" },
         { status: 400 }
       );
     }
 
-    const { questionText, boardId, boardCode, levelId, subjectId } = parsed.data;
-
-    let resolvedBoardId = boardId;
-
-    const boardCodes = ["ib", "ap", "cambridge", "cbse", "icse"];
-    if (boardCodes.includes(boardId.toLowerCase())) {
-      const boardByCode = await prisma.board.findUnique({
-        where: { code: boardId.toUpperCase() as any },
-        select: { id: true },
-      });
-      if (!boardByCode) {
-        return NextResponse.json(
-          { error: "Invalid board" },
-          { status: 400 }
-        );
-      }
-      resolvedBoardId = boardByCode.id;
-    }
+    const { boardCode, boardId, levelId, subjectId, questionText } = parsed.data;
 
     const [board, level, subject] = await Promise.all([
-      prisma.board.findUnique({ where: { id: resolvedBoardId } }),
+      prisma.board.findUnique({ where: { id: boardId } }),
       prisma.academicLevel.findUnique({ where: { id: levelId } }),
       prisma.subject.findUnique({ where: { id: subjectId } }),
     ]);
@@ -55,7 +49,6 @@ export async function POST(request: Request) {
     }
 
     let aiResponse;
-
     try {
       aiResponse = await generateAIResponse({
         questionText,
@@ -65,15 +58,21 @@ export async function POST(request: Request) {
         subjectName: subject.name,
       });
     } catch (aiError) {
-      console.error("AI generation failed, using fallback:", aiError);
+      console.error("AI generation failed:", aiError);
       aiResponse = {
         directAnswer:
           "I understand you're asking about this topic. To provide a comprehensive answer, please ensure your AI provider API key is configured. Here's a structured approach: Start by identifying key concepts, then build your argument with specific examples, and conclude with a summary of main points.",
         structureGuide: {
-          introduction: "Begin with a clear thesis statement that directly addresses the question.",
+          introduction:
+            "Begin with a clear thesis statement that directly addresses the question.",
           body: "Develop your argument in 3-4 paragraphs, each focusing on a single main point with supporting evidence.",
-          formattingNotes: "Use clear paragraph breaks and maintain formal academic language throughout.",
-          paragraphFlow: "Each paragraph should transition smoothly to the next using connecting phrases.",
+          evaluation: null,
+          conclusion:
+            "Summarize your main argument and restate your thesis in light of the evidence presented.",
+          formattingNotes:
+            "Use clear paragraph breaks and maintain formal academic language throughout.",
+          paragraphFlow:
+            "Each paragraph should transition smoothly to the next using connecting phrases.",
         },
         commonMistakes: [
           "Not directly answering the question asked",
@@ -87,7 +86,7 @@ export async function POST(request: Request) {
     const sessionRecord = await prisma.questionSession.create({
       data: {
         userId: session.user.id,
-        boardId: resolvedBoardId,
+        boardId: board.id,
         levelId,
         subjectId,
         questionText,
@@ -97,13 +96,10 @@ export async function POST(request: Request) {
             structureGuide: aiResponse.structureGuide as any,
             commonMistakes: aiResponse.commonMistakes as any,
             visuals: aiResponse.visuals as any,
-            rawProviderPayload: null,
           },
         },
       },
-      include: {
-        aiResponse: true,
-      },
+      include: { aiResponse: true },
     });
 
     const metric = await prisma.gamificationMetric.findUnique({
@@ -124,50 +120,17 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         sessionId: sessionRecord.id,
-        aiResponse: {
-          directAnswer: aiResponse.directAnswer,
-          structureGuide: aiResponse.structureGuide,
-          commonMistakes: aiResponse.commonMistakes,
-          visuals: aiResponse.visuals,
-        },
+        directAnswer: aiResponse.directAnswer,
+        structureGuide: aiResponse.structureGuide,
+        commonMistakes: aiResponse.commonMistakes,
+        visuals: aiResponse.visuals,
       },
       { status: 201 }
     );
   } catch (error) {
-    console.error("Question API error:", error);
+    console.error("AI answer API error:", error);
     return NextResponse.json(
-      { error: "Failed to process question" },
-      { status: 500 }
-    );
-  }
-}
-
-export async function GET(request: Request) {
-  try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const url = new URL(request.url);
-    const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "10"), 50);
-
-    const questions = await prisma.questionSession.findMany({
-      where: { userId: session.user.id },
-      orderBy: { createdAt: "desc" },
-      take: limit,
-      select: {
-        id: true,
-        questionText: true,
-        createdAt: true,
-      },
-    });
-
-    return NextResponse.json(questions);
-  } catch (error) {
-    console.error("Failed to fetch question history:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch question history" },
+      { error: "Failed to process your question" },
       { status: 500 }
     );
   }

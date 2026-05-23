@@ -26,7 +26,6 @@ export async function GET(
     const subjects = await prisma.subject.findMany({
       where: {
         boardId: board.id,
-        levelId,
         isActive: true,
       },
       orderBy: { name: "asc" },

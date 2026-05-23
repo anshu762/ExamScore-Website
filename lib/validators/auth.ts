@@ -46,9 +46,10 @@ export const questionSchema = z.object({
     .string()
     .min(5, "Question must be at least 5 characters")
     .max(2000, "Question must be at most 2000 characters"),
-  boardId: z.string().uuid("Invalid board"),
-  levelId: z.string().uuid("Invalid academic level"),
-  subjectId: z.string().uuid("Invalid subject"),
+  boardId: z.string().min(1, "Board is required"),
+  boardCode: z.string().optional(),
+  levelId: z.string().min(1, "Level is required"),
+  subjectId: z.string().min(1, "Subject is required"),
 });
 
 export type SignUpInput = z.infer<typeof signUpSchema>;
