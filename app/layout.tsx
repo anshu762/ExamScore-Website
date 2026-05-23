@@ -13,11 +13,11 @@ const spectral = Spectral({
 
 export const metadata: Metadata = {
   title: {
-    default: "ExamScore | Premium AI-Powered Exam Preparation",
+    default: "ExamScore — Stop Guessing, Start Scoring",
     template: "%s | ExamScore",
   },
   description:
-    "Master your exams with AI-powered study tools. Get board-specific answers, structured guides, and personalized learning strategies.",
+    "Board-specific, examiner-aligned answers for IB, AP, Cambridge, CBSE, and ICSE students. AI-powered study tools for serious exam preparation.",
   keywords: [
     "exam preparation",
     "AI tutoring",
@@ -27,7 +27,20 @@ export const metadata: Metadata = {
     "CBSE",
     "ICSE",
     "study tools",
+    "board-specific answers",
+    "examiner-aligned",
   ],
+  openGraph: {
+    title: "ExamScore — Stop Guessing, Start Scoring",
+    description:
+      "Board-specific, examiner-aligned answers for IB, AP, Cambridge, CBSE, and ICSE students.",
+    type: "website",
+    siteName: "ExamScore",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

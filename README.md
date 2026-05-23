@@ -70,10 +70,10 @@ npm install
 
 3. Copy environment variables:
 ```bash
-cp .env.example .env.local
+cp .env.example .env
 ```
 
-4. Update `.env.local` with your values:
+4. Update `.env` with your values:
 ```env
 DATABASE_URL="postgresql://..."
 AUTH_SECRET="generate-with: openssl rand -base64 32"

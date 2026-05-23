@@ -5,6 +5,7 @@ import { z } from "zod";
 import { generateAIResponse } from "@/lib/ai/provider";
 import { trackEvent } from "@/lib/analytics";
 import { updateMetrics } from "@/lib/gamification";
+import { checkRateLimit, sanitizeInput } from "@/lib/security";
 
 const answerSchema = z.object({
   boardCode: z.string().min(1, "Board code is required"),
@@ -24,7 +25,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const allowed = await checkRateLimit(session.user.id);
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "You've reached the limit of 20 questions per hour. Please wait before asking more." },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
+    if (body.questionText) body.questionText = sanitizeInput(body.questionText);
     const parsed = answerSchema.safeParse(body);
 
     if (!parsed.success) {
