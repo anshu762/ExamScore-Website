@@ -14,10 +14,12 @@ import {
   Star,
   ArrowRight,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Visual } from "@/lib/ai/types";
 import { Markdown } from "./Markdown";
+import { FolderSelectorModal } from "./FolderSelectorModal";
 
 interface AnswerDisplayProps {
   directAnswer: string;
@@ -60,7 +62,9 @@ export function AnswerDisplay({
 }: AnswerDisplayProps) {
   const [activeTab, setActiveTab] = useState<TabId>("answer");
 
-  const hasVisuals = visuals.some((v) => v.type !== "none");
+  const hasVisuals = Array.isArray(visuals) ? visuals.some((v) => v.type !== "none") : false;
+  const [folderModalOpen, setFolderModalOpen] = useState(false);
+  const [flashcardSaving, setFlashcardSaving] = useState(false);
 
   function handleCopy() {
     const text = [directAnswer, structureGuide.introduction, structureGuide.body]
@@ -71,15 +75,30 @@ export function AnswerDisplay({
   }
 
   function handleSaveToFolder() {
-    toast.success("Saved to folder (stub)");
+    setFolderModalOpen(true);
   }
 
-  function handleCreateFlashcard() {
-    toast.success("Flashcard created (stub)");
+  async function handleCreateFlashcard() {
+    if (!sessionId) {
+      toast.error("No session available");
+      return;
+    }
+    setFlashcardSaving(true);
+    try {
+      const res = await fetch(`/api/flashcards/from-session/${sessionId}`, { method: "POST" });
+      if (!res.ok) throw new Error();
+      toast.success("Flashcard created");
+    } catch {
+      toast.error("Failed to create flashcard");
+    } finally {
+      setFlashcardSaving(false);
+    }
   }
 
   return (
     <div className="space-y-6">
+      
+      {/* Tab bar */}
       <div className="relative flex gap-1 rounded-2xl bg-[#0F3226]/5 p-1.5">
         <div className="absolute inset-x-1.5 top-0 h-px bg-gradient-to-r from-transparent via-[#0F3226]/20 to-transparent" />
         {TABS.map((tab) => {
@@ -291,33 +310,49 @@ export function AnswerDisplay({
         </div>
       )}
 
-      <div className="sticky bottom-0 -mx-1 rounded-2xl border border-[#D6D0C4]/30 bg-[#FDFCF9]/90 px-5 py-3.5 shadow-lg shadow-black/[0.02] backdrop-blur-xl">
-        <div className="flex items-center justify-center gap-1.5">
+      {/* Spacer for fixed action bar */}
+      <div className="h-20" />
+      
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#0F3226]/15 bg-[#0F3226] px-5 py-3.5 shadow-lg">
+        <div className="mx-auto flex max-w-5xl items-center justify-center gap-2">
           <button
             onClick={handleSaveToFolder}
-            className="flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-medium text-[#6B7A72] transition-all hover:bg-[#0F3226]/5 hover:text-[#0F3226] active:scale-[0.97]"
+            className="flex items-center gap-2 rounded-xl bg-[#FDFCF9]/10 px-4 py-2 text-xs font-medium text-[#FDFCF9] transition-all hover:bg-[#FDFCF9]/20 active:scale-[0.97]"
           >
             <FolderPlus className="h-3.5 w-3.5" />
             Save
           </button>
-          <div className="h-5 w-px bg-[#D6D0C4]/40" />
+          <div className="h-5 w-px bg-[#FDFCF9]/20" />
           <button
             onClick={handleCreateFlashcard}
-            className="flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-medium text-[#6B7A72] transition-all hover:bg-[#0F3226]/5 hover:text-[#0F3226] active:scale-[0.97]"
+            disabled={flashcardSaving}
+            className="flex items-center gap-2 rounded-xl bg-[#FDFCF9]/10 px-4 py-2 text-xs font-medium text-[#FDFCF9] transition-all hover:bg-[#FDFCF9]/20 active:scale-[0.97] disabled:opacity-40"
           >
-            <Check className="h-3.5 w-3.5" />
+            {flashcardSaving ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Check className="h-3.5 w-3.5" />
+            )}
             Flashcard
           </button>
-          <div className="h-5 w-px bg-[#D6D0C4]/40" />
+          <div className="h-5 w-px bg-[#FDFCF9]/20" />
           <button
             onClick={handleCopy}
-            className="flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-medium text-[#6B7A72] transition-all hover:bg-[#0F3226]/5 hover:text-[#0F3226] active:scale-[0.97]"
+            className="flex items-center gap-2 rounded-xl bg-[#FDFCF9]/10 px-4 py-2 text-xs font-medium text-[#FDFCF9] transition-all hover:bg-[#FDFCF9]/20 active:scale-[0.97]"
           >
             <Copy className="h-3.5 w-3.5" />
             Copy
           </button>
         </div>
       </div>
+
+      {sessionId && (
+        <FolderSelectorModal
+          open={folderModalOpen}
+          onClose={() => setFolderModalOpen(false)}
+          sessionId={sessionId}
+        />
+      )}
     </div>
   );
 }

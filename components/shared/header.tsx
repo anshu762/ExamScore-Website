@@ -4,13 +4,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Sparkles, FolderKanban, Brain } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/#features", label: "Features" },
   { href: "/#how-it-works", label: "How It Works" },
+];
+
+const appLinks = [
+  { href: "/ask", label: "Ask Question", icon: Sparkles },
+  { href: "/folders", label: "Folders", icon: FolderKanban },
+  { href: "/flashcards", label: "Flashcards", icon: Brain },
 ];
 
 export function Header() {
@@ -46,6 +52,27 @@ export function Header() {
             >
               {link.label}
               {pathname === link.href && (
+                <span className="absolute -bottom-1 left-0 right-0 h-0.5 rounded-full bg-primary" />
+              )}
+            </Link>
+          ))}
+          {session && (
+            <span className="h-4 w-px bg-border/60" />
+          )}
+          {session && appLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={cn(
+                "relative flex items-center gap-1.5 text-sm transition-colors duration-200",
+                pathname.startsWith(link.href)
+                  ? "text-foreground font-medium"
+                  : "text-text-secondary hover:text-foreground"
+              )}
+            >
+              <link.icon className="h-3.5 w-3.5" />
+              {link.label}
+              {pathname.startsWith(link.href) && (
                 <span className="absolute -bottom-1 left-0 right-0 h-0.5 rounded-full bg-primary" />
               )}
             </Link>

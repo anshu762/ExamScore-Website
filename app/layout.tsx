@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Spectral } from "next/font/google";
 import { Providers } from "@/components/shared/providers";
+import LayoutRouter from "@/components/shared/layout-router";
 import "./globals.css";
 
 const spectral = Spectral({
@@ -37,7 +38,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${spectral.variable}`} suppressHydrationWarning>
       <body className="min-h-screen bg-bg font-sans text-foreground antialiased">
-        <Providers>{children}</Providers>
+        <Providers>
+          <LayoutRouter>{children}</LayoutRouter>
+        </Providers>
       </body>
     </html>
   );

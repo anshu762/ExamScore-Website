@@ -10,6 +10,7 @@ import {
   FolderKanban,
   Brain,
   BarChart3,
+  LayoutDashboard,
   LogOut,
   Menu,
   X,
@@ -17,18 +18,27 @@ import {
 } from "lucide-react";
 
 const navItems = [
+  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/ask", label: "Ask Question", icon: Sparkles },
   { href: "/folders", label: "My Folders", icon: FolderKanban },
   { href: "/flashcards", label: "Flashcards", icon: Brain },
   { href: "/progress", label: "Progress", icon: BarChart3 },
 ];
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+const publicRoutes = ["/", "/auth", "/onboarding"];
+
+export default function LayoutRouter({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
   const closeSidebar = () => setSidebarOpen(false);
+
+  const isPublic = publicRoutes.some((r) => pathname === r || pathname.startsWith(r + "/"));
+  const isDashboardPath = pathname.startsWith("/dashboard");
+
+  if (isPublic) {
+    return <>{children}</>;
+  }
 
   return (
     <div className="flex min-h-screen bg-[#F5F2EA]">
@@ -65,7 +75,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <nav className="flex-1 space-y-0.5 px-3 py-5">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href;
+            const isActive =
+              pathname === item.href ||
+              (isDashboardPath && item.href === "/dashboard" && pathname === "/dashboard") ||
+              (item.href !== "/dashboard" && pathname.startsWith(item.href));
             return (
               <Link
                 key={item.href}
@@ -128,7 +141,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </header>
 
         <main className="flex-1">
-          <div className="mx-auto w-full max-w-5xl px-5 py-8 md:px-10 md:py-10">
+          <div className={cn("mx-auto w-full px-5 py-8 md:px-10 md:py-10", isDashboardPath ? "max-w-6xl" : "max-w-5xl")}>
             {children}
           </div>
         </main>
