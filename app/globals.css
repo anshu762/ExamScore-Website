@@ -82,3 +82,58 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #A89F90;
 }
+
+/* ── KaTeX Math Rendering ─────────────────────────────────────────────────── */
+/* Import KaTeX fonts (component also imports katex/dist/katex.min.css) */
+
+/* Block (display) equations — compact vertical spacing */
+.katex-display {
+  margin: 0.75rem 0 !important;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.5rem 0;
+}
+
+.katex-display > .katex {
+  max-width: 100%;
+}
+
+/* Inline equations — baseline alignment with surrounding text */
+.katex {
+  font-size: 1em;
+  line-height: inherit;
+}
+
+/* Equation scroll on mobile without breaking layout */
+.katex-html {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* ── Answer Prose Area ───────────────────────────────────────────────────── */
+/* Extra spacing and typography polish inside AI answer cards */
+.answer-prose p {
+  margin-bottom: 0.65rem;
+  line-height: 1.7;
+}
+
+.answer-prose p:last-child {
+  margin-bottom: 0;
+}
+
+.answer-prose .katex-display {
+  margin: 1rem 0 !important;
+  background: rgba(15, 50, 38, 0.03);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(214, 208, 196, 0.4);
+}
+
+.answer-prose ul,
+.answer-prose ol {
+  margin-bottom: 0.65rem;
+}
+
+.answer-prose li + li {
+  margin-top: 0.3rem;
+}
