@@ -2,16 +2,18 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { AIProvider, AIProviderConfig, AIQuestionInput, AIResponseOutput, Visual } from "./types";
 import { buildSystemPrompt, buildUserPrompt } from "./prompts";
 
+const FALLBACK_MODELS = ["gemini-2.5-flash", "gemini-2.0-flash"];
+
 export class GeminiProvider implements AIProvider {
   name = "gemini";
   private client: GoogleGenerativeAI;
-  private modelName: string;
+  private primaryModel: string;
   private maxTokens: number;
   private temperature: number;
 
   constructor(config: AIProviderConfig) {
     this.client = new GoogleGenerativeAI(config.apiKey);
-    this.modelName = config.model ?? process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
+    this.primaryModel = config.model ?? process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
     this.maxTokens = config.maxTokens ?? 8192;
     this.temperature = config.temperature ?? 0.2;
   }
@@ -20,25 +22,39 @@ export class GeminiProvider implements AIProvider {
     const systemPrompt = buildSystemPrompt(input.boardCode, input.levelName, input.subjectName);
     const userPrompt = buildUserPrompt(input.questionText, input.boardCode, input.levelName, input.subjectName);
 
-    const model = this.client.getGenerativeModel({
-      model: this.modelName,
-      generationConfig: {
-        temperature: this.temperature,
-        maxOutputTokens: this.maxTokens,
-      },
-      systemInstruction: systemPrompt,
-    });
+    const modelsToTry = [
+      this.primaryModel,
+      ...FALLBACK_MODELS.filter((m) => m !== this.primaryModel),
+    ];
 
     let lastError: Error | null = null;
 
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        const result = await this.makeRequest(model, userPrompt);
-        return this.parseResponse(result);
-      } catch (err) {
-        lastError = err instanceof Error ? err : new Error("Gemini request failed");
-        if (attempt < 2) {
-          await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+    for (const modelName of modelsToTry) {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const model = this.client.getGenerativeModel({
+            model: modelName,
+            generationConfig: {
+              temperature: this.temperature,
+              maxOutputTokens: this.maxTokens,
+            },
+            systemInstruction: systemPrompt,
+          });
+
+          const result = await this.makeRequest(model, userPrompt);
+          return this.parseResponse(result);
+        } catch (err) {
+          lastError = err instanceof Error ? err : new Error("Gemini request failed");
+          const isOverloaded = this.isOverloadError(err);
+          if (attempt === 0 && isOverloaded) {
+            await new Promise((r) => setTimeout(r, 3000));
+            continue;
+          }
+          if (attempt === 0 && !isOverloaded) {
+            await new Promise((r) => setTimeout(r, 1000));
+            continue;
+          }
+          break;
         }
       }
     }
@@ -46,12 +62,20 @@ export class GeminiProvider implements AIProvider {
     throw lastError ?? new Error("Gemini request failed after retries");
   }
 
+  private isOverloadError(err: unknown): boolean {
+    if (err && typeof err === "object" && "status" in err) {
+      const status = (err as any).status;
+      return status === 429 || status === 503;
+    }
+    return false;
+  }
+
   private async makeRequest(
     model: ReturnType<GoogleGenerativeAI["getGenerativeModel"]>,
     prompt: string
   ): Promise<string> {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000);
+    const timeout = setTimeout(() => controller.abort(), 45000);
 
     try {
       const result = await model.generateContent(prompt);

@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sparkles, AlertCircle, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import { Markdown } from "@/components/shared/Markdown";
 
 interface AIResponseData {
   directAnswer: string;
@@ -159,10 +160,8 @@ export function AskQuestion() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="prose prose-sm max-w-none text-foreground">
-                <p className="whitespace-pre-wrap leading-relaxed">
-                  {response.directAnswer}
-                </p>
+              <div className="font-serif text-foreground">
+                <Markdown content={response.directAnswer} />
               </div>
             </CardContent>
           </Card>
@@ -177,9 +176,9 @@ export function AskQuestion() {
                   <h4 className="text-sm font-semibold text-accent mb-1">
                     Introduction
                   </h4>
-                  <p className="text-sm text-text-secondary whitespace-pre-wrap">
-                    {response.structureGuide.introduction}
-                  </p>
+                  <div className="text-sm text-text-secondary">
+                    <Markdown content={response.structureGuide.introduction} />
+                  </div>
                 </div>
               )}
               {response.structureGuide.body && (
@@ -187,9 +186,9 @@ export function AskQuestion() {
                   <h4 className="text-sm font-semibold text-accent mb-1">
                     Body
                   </h4>
-                  <p className="text-sm text-text-secondary whitespace-pre-wrap">
-                    {response.structureGuide.body}
-                  </p>
+                  <div className="text-sm text-text-secondary">
+                    <Markdown content={response.structureGuide.body} />
+                  </div>
                 </div>
               )}
               {response.structureGuide.evaluation && (
@@ -197,9 +196,9 @@ export function AskQuestion() {
                   <h4 className="text-sm font-semibold text-accent mb-1">
                     Evaluation
                   </h4>
-                  <p className="text-sm text-text-secondary whitespace-pre-wrap">
-                    {response.structureGuide.evaluation}
-                  </p>
+                  <div className="text-sm text-text-secondary">
+                    <Markdown content={response.structureGuide.evaluation ?? ""} />
+                  </div>
                 </div>
               )}
               {response.structureGuide.conclusion && (
@@ -207,9 +206,9 @@ export function AskQuestion() {
                   <h4 className="text-sm font-semibold text-accent mb-1">
                     Conclusion
                   </h4>
-                  <p className="text-sm text-text-secondary whitespace-pre-wrap">
-                    {response.structureGuide.conclusion}
-                  </p>
+                  <div className="text-sm text-text-secondary">
+                    <Markdown content={response.structureGuide.conclusion} />
+                  </div>
                 </div>
               )}
               <Separator />
@@ -218,9 +217,9 @@ export function AskQuestion() {
                   <h4 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">
                     Formatting Notes
                   </h4>
-                  <p className="text-sm text-text-secondary">
-                    {response.structureGuide.formattingNotes}
-                  </p>
+                  <div className="text-sm text-text-secondary">
+                    <Markdown content={response.structureGuide.formattingNotes} />
+                  </div>
                 </div>
               )}
               {response.structureGuide.paragraphFlow && (
@@ -228,9 +227,9 @@ export function AskQuestion() {
                   <h4 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">
                     Paragraph Flow
                   </h4>
-                  <p className="text-sm text-text-secondary">
-                    {response.structureGuide.paragraphFlow}
-                  </p>
+                  <div className="text-sm text-text-secondary">
+                    <Markdown content={response.structureGuide.paragraphFlow} />
+                  </div>
                 </div>
               )}
             </CardContent>
