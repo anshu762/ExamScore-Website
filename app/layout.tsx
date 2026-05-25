@@ -30,6 +30,11 @@ export const metadata: Metadata = {
     "board-specific answers",
     "examiner-aligned",
   ],
+  icons: {
+    icon: "/logo.jpg",
+    shortcut: "/logo.jpg",
+    apple: "/logo.jpg",
+  },
   openGraph: {
     title: "ExamScore — Stop Guessing, Start Scoring",
     description:
