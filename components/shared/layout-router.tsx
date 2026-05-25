@@ -14,7 +14,7 @@ import {
   LogOut,
   Menu,
   X,
-  ChevronRight,
+  Clock,
 } from "lucide-react";
 
 const navItems = [
@@ -22,7 +22,14 @@ const navItems = [
   { href: "/ask", label: "Ask Question", icon: Sparkles },
   { href: "/folders", label: "My Folders", icon: FolderKanban },
   { href: "/flashcards", label: "Flashcards", icon: Brain },
-  { href: "/history", label: "History", icon: BarChart3 },
+  { href: "/history", label: "History", icon: Clock },
+  { href: "/progress", label: "Progress", icon: BarChart3 },
+];
+
+const bottomNavItems = [
+  { href: "/ask", label: "Ask", icon: Sparkles },
+  { href: "/folders", label: "Folders", icon: FolderKanban },
+  { href: "/flashcards", label: "Cards", icon: Brain },
   { href: "/progress", label: "Progress", icon: BarChart3 },
 ];
 
@@ -35,11 +42,19 @@ export default function LayoutRouter({ children }: { children: React.ReactNode }
   const closeSidebar = () => setSidebarOpen(false);
 
   const isPublic = publicRoutes.some((r) => pathname === r || pathname.startsWith(r + "/"));
-  const isDashboardPath = pathname.startsWith("/dashboard");
+  const isAppPage = !isPublic;
 
   if (isPublic) {
     return <>{children}</>;
   }
+
+  const isActive = (href: string) => {
+    if (href === "/ask" && pathname === "/ask") return true;
+    if (href === "/ask" && pathname.startsWith("/dashboard/ask")) return true;
+    if (pathname === href) return true;
+    if (href !== "/ask" && pathname.startsWith(href)) return true;
+    return false;
+  };
 
   return (
     <div className="flex min-h-screen bg-[#F5F2EA]">
@@ -76,10 +91,6 @@ export default function LayoutRouter({ children }: { children: React.ReactNode }
         <nav className="flex-1 space-y-0.5 px-3 py-5">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive =
-              pathname === item.href ||
-              (isDashboardPath && item.href === "/dashboard" && pathname === "/dashboard") ||
-              (item.href !== "/dashboard" && pathname.startsWith(item.href));
             return (
               <Link
                 key={item.href}
@@ -87,7 +98,7 @@ export default function LayoutRouter({ children }: { children: React.ReactNode }
                 onClick={closeSidebar}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150",
-                  isActive
+                  isActive(item.href)
                     ? "bg-[#FDFCF9]/10 font-medium text-[#FDFCF9]"
                     : "text-[#FDFCF9]/60 hover:bg-[#FDFCF9]/5 hover:text-[#FDFCF9]/90"
                 )}
@@ -102,23 +113,22 @@ export default function LayoutRouter({ children }: { children: React.ReactNode }
         <div className="mx-4 h-px bg-[#FDFCF9]/10" />
 
         <div className="px-3 py-4">
-          <div className="flex items-center gap-3 rounded-lg px-3 py-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FDFCF9]/10 text-xs font-semibold text-[#FDFCF9]/80">
+          <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-[#FDFCF9]/5">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FDFCF9]/10 text-xs font-semibold text-[#FDFCF9]/80">
               {session?.user?.name?.charAt(0)?.toUpperCase() ?? "U"}
             </div>
-            <div className="flex-1 truncate">
-              <p className="truncate text-sm text-[#FDFCF9]/90">{session?.user?.name ?? "User"}</p>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-[#FDFCF9]/90">{session?.user?.name ?? "User"}</p>
               <p className="truncate text-xs text-[#FDFCF9]/40">{session?.user?.email ?? ""}</p>
             </div>
+            <button
+              onClick={() => signOut()}
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[#FDFCF9]/30 transition-colors hover:bg-[#FDFCF9]/10 hover:text-[#FDFCF9]/60"
+              title="Sign out"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+            </button>
           </div>
-          <button
-            onClick={() => signOut()}
-            className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-[#FDFCF9]/40 transition-colors hover:bg-[#FDFCF9]/5 hover:text-[#FDFCF9]/70"
-          >
-            <LogOut className="h-4 w-4" />
-            Sign Out
-            <ChevronRight className="ml-auto h-3.5 w-3.5" />
-          </button>
         </div>
       </aside>
 
@@ -141,12 +151,33 @@ export default function LayoutRouter({ children }: { children: React.ReactNode }
           </div>
         </header>
 
-        <main className="flex-1">
-          <div className={cn("mx-auto w-full px-5 py-8 md:px-10 md:py-10", isDashboardPath ? "max-w-6xl" : "max-w-5xl")}>
+        <main className="flex-1 pb-16 md:pb-0">
+          <div className={cn("mx-auto w-full px-5 py-8 md:px-10 md:py-10")}>
             {children}
           </div>
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-[#D6D0C4]/40 bg-[#FDFCF9] px-2 py-2 shadow-lg md:hidden">
+        {bottomNavItems.map((item) => {
+          const Icon = item.icon;
+          const active = isActive(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex flex-col items-center gap-0.5 rounded-lg px-3 py-1.5 transition-colors",
+                active ? "text-[#0F3226]" : "text-[#6B7A72]"
+              )}
+            >
+              <Icon className="h-5 w-5" />
+              <span className="text-[10px] font-medium">{item.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
     </div>
   );
 }

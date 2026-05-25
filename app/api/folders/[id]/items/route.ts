@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
 const addItemSchema = z.object({
-  type: z.enum(["QUESTION", "FLASHCARD", "NOTE"]),
+  type: z.literal("QUESTION"),
   referenceId: z.string().min(1),
 });
 
@@ -23,50 +23,32 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     }
 
     const items = await prisma.folderItem.findMany({
-      where: { folderId: id },
+      where: { folderId: id, type: "QUESTION" },
       orderBy: { id: "desc" },
     });
 
     const populated = await Promise.all(
       items.map(async (item) => {
-        let data: Record<string, unknown> | null = null;
-        if (item.type === "QUESTION") {
-          const qs = await prisma.questionSession.findUnique({
-            where: { id: item.referenceId },
-            select: {
-              id: true,
-              questionText: true,
-              createdAt: true,
-              subject: { select: { name: true } },
-              board: { select: { name: true } },
-              level: { select: { name: true } },
-              aiResponse: {
-                select: {
-                  id: true,
-                  directAnswer: true,
-                  structureGuide: true,
-                  commonMistakes: true,
-                  visuals: true,
-                  createdAt: true,
-                },
+        const qs = await prisma.questionSession.findUnique({
+          where: { id: item.referenceId },
+          select: {
+            id: true,
+            questionText: true,
+            createdAt: true,
+            subject: { select: { name: true } },
+            board: { select: { name: true } },
+            level: { select: { name: true } },
+            aiResponse: {
+              select: {
+                id: true,
+                directAnswer: true,
+                structureGuide: true,
+                commonMistakes: true,
               },
             },
-          });
-          data = qs;
-        } else if (item.type === "NOTE") {
-          const note = await prisma.note.findUnique({
-            where: { id: item.referenceId },
-            select: { id: true, title: true, content: true, createdAt: true },
-          });
-          data = note;
-        } else if (item.type === "FLASHCARD") {
-          const fc = await prisma.flashcard.findUnique({
-            where: { id: item.referenceId },
-            select: { id: true, front: true, back: true, createdAt: true },
-          });
-          data = fc;
-        }
-        return { ...item, details: data };
+          },
+        });
+        return { ...item, details: qs };
       })
     );
 

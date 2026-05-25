@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /history/
+Disallow: /onboarding/
+
+Sitemap: https://examscore.app/sitemap.xml

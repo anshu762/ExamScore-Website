@@ -6,7 +6,7 @@ import { trackEvent } from "@/lib/analytics";
 
 const createFlashcardSchema = z.object({
   front: z.string().min(1).max(1000),
-  back: z.string().min(1).max(2000),
+  back: z.string().min(1).max(10000),
   boardId: z.string().min(1),
   subjectId: z.string().min(1),
   source: z.enum(["AI_GENERATED", "MANUAL"]).default("MANUAL"),

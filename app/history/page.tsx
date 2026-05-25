@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { ArrowRight, Loader2, Search } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowRight, Search, Clock, BookOpen, Calendar } from "lucide-react";
 
 interface Session {
   id: string;
@@ -49,86 +50,167 @@ export default function HistoryPage() {
   }, [boardFilter, subjectFilter, dateFrom, dateTo]);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <p className="text-xs font-medium uppercase tracking-[0.15em] text-text-muted">
+    <div className="mx-auto max-w-4xl space-y-6 sm:space-y-8">
+      {/* Header */}
+      <div className="space-y-1">
+        <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.15em] text-[#6B7A72]">
+          <span className="inline-block h-1 w-1 rounded-full bg-[#C9A84C]" />
           History
+        </div>
+        <h1 className="font-serif text-2xl font-semibold tracking-tight text-[#0A1A14] sm:text-3xl">
+          Question History
+        </h1>
+        <p className="text-sm text-[#3D4F47]">
+          Browse all your past questions and AI answers.
         </p>
-        <h1 className="mt-1 font-serif text-2xl font-semibold text-foreground">Question History</h1>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3">
-        <input
-          placeholder="Board code (IB, AP, CBSE...)"
-          value={boardFilter}
-          onChange={(e) => { setBoardFilter(e.target.value); setCursor(null); }}
-          className="h-9 rounded-lg border border-border/60 bg-card px-3 text-xs text-foreground outline-none placeholder:text-text-muted focus:border-primary"
-        />
-        <input
-          placeholder="Subject ID"
-          value={subjectFilter}
-          onChange={(e) => { setSubjectFilter(e.target.value); setCursor(null); }}
-          className="h-9 rounded-lg border border-border/60 bg-card px-3 text-xs text-foreground outline-none placeholder:text-text-muted focus:border-primary"
-        />
-        <input
-          type="date"
-          value={dateFrom}
-          onChange={(e) => { setDateFrom(e.target.value); setCursor(null); }}
-          className="h-9 rounded-lg border border-border/60 bg-card px-3 text-xs text-foreground outline-none focus:border-primary"
-        />
-        <input
-          type="date"
-          value={dateTo}
-          onChange={(e) => { setDateTo(e.target.value); setCursor(null); }}
-          className="h-9 rounded-lg border border-border/60 bg-card px-3 text-xs text-foreground outline-none focus:border-primary"
-        />
+      <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex items-center gap-1.5 rounded-xl border border-[#D6D0C4]/30 bg-[#FDFCF9] px-3 py-2 shadow-sm">
+          <Search className="h-3.5 w-3.5 text-[#6B7A72]" />
+          <input
+            placeholder="Board (CBSE, ICSE...)"
+            value={boardFilter}
+            onChange={(e) => { setBoardFilter(e.target.value); setCursor(null); }}
+            className="min-w-0 border-0 bg-transparent text-xs text-[#0A1A14] outline-none placeholder:text-[#6B7A72]/50"
+          />
+        </div>
+        <div className="flex items-center gap-1.5 rounded-xl border border-[#D6D0C4]/30 bg-[#FDFCF9] px-3 py-2 shadow-sm">
+          <BookOpen className="h-3.5 w-3.5 text-[#6B7A72]" />
+          <input
+            placeholder="Subject"
+            value={subjectFilter}
+            onChange={(e) => { setSubjectFilter(e.target.value); setCursor(null); }}
+            className="min-w-0 border-0 bg-transparent text-xs text-[#0A1A14] outline-none placeholder:text-[#6B7A72]/50"
+          />
+        </div>
+        <div className="flex items-center gap-1.5 rounded-xl border border-[#D6D0C4]/30 bg-[#FDFCF9] px-3 py-2 shadow-sm">
+          <Calendar className="h-3.5 w-3.5 text-[#6B7A72]" />
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => { setDateFrom(e.target.value); setCursor(null); }}
+            className="min-w-0 border-0 bg-transparent text-xs text-[#0A1A14] outline-none [&::-webkit-calendar-picker-indicator]:opacity-40"
+          />
+          <span className="text-xs text-[#D6D0C4]">—</span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => { setDateTo(e.target.value); setCursor(null); }}
+            className="min-w-0 border-0 bg-transparent text-xs text-[#0A1A14] outline-none [&::-webkit-calendar-picker-indicator]:opacity-40"
+          />
+        </div>
+        {(boardFilter || subjectFilter || dateFrom || dateTo) && (
+          <button
+            onClick={() => { setBoardFilter(""); setSubjectFilter(""); setDateFrom(""); setDateTo(""); setCursor(null); }}
+            className="rounded-lg px-3 py-2 text-xs font-medium text-[#6B7A72] transition-colors hover:bg-[#0F3226]/5 hover:text-[#0F3226]"
+          >
+            Clear
+          </button>
+        )}
       </div>
 
       {/* List */}
-      <div className="space-y-2">
-        {sessions.map((s) => (
-          <Link
+      <div className="space-y-2.5">
+        {sessions.map((s, i) => (
+          <motion.div
             key={s.id}
-            href={`/history/${s.id}`}
-            className="group flex items-center gap-4 rounded-lg border border-border/40 bg-card p-4 transition-all hover:border-border hover:shadow-sm"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: i * 0.03 }}
           >
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 text-[11px] font-medium text-text-muted">
-                <span className="rounded bg-primary/10 px-1.5 py-0.5 text-primary">
-                  {s.board.name}
-                </span>
-                <span>{s.subject.name}</span>
-                <span>· {s.level.name}</span>
-                <span>· {new Date(s.createdAt).toLocaleDateString()}</span>
+            <Link
+              href={`/history/${s.id}`}
+              className="group relative flex items-center gap-4 overflow-hidden rounded-xl border border-[#D6D0C4]/30 bg-[#FDFCF9] p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#0F3226]/20 hover:shadow-md sm:p-5"
+            >
+              <div className="absolute top-0 left-0 h-full w-0.5 bg-gradient-to-b from-[#0F3226] to-[#C9A84C] opacity-0 transition-opacity group-hover:opacity-100" />
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium">
+                  <span className="rounded-md bg-[#0F3226]/5 px-2 py-0.5 text-[#0F3226]">
+                    {s.board.name}
+                  </span>
+                  <span className="text-[#B8B0A0]">·</span>
+                  <span className="text-[#6B7A72]">{s.subject.name}</span>
+                  <span className="text-[#B8B0A0]">·</span>
+                  <span className="text-[#6B7A72]">{s.level.name}</span>
+                  <span className="ml-auto flex items-center gap-1 text-[10px] text-[#B8B0A0]">
+                    <Clock className="h-3 w-3" />
+                    {new Date(s.createdAt).toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </span>
+                </div>
+                <p className="mt-1.5 line-clamp-1 text-sm font-medium text-[#0A1A14]">
+                  {s.questionText}
+                </p>
               </div>
-              <p className="mt-1 line-clamp-1 text-sm font-medium text-foreground">
-                {s.questionText}
-              </p>
-            </div>
-            <ArrowRight className="h-4 w-4 shrink-0 text-text-muted opacity-0 transition-all group-hover:opacity-100" />
-          </Link>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#0F3226]/5 text-[#0F3226] opacity-0 transition-all group-hover:opacity-100 group-hover:bg-[#0F3226]/10">
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </div>
+            </Link>
+          </motion.div>
         ))}
+
         {loading && (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-5 w-5 animate-spin text-text-muted" />
+          <div className="space-y-2.5">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="animate-pulse rounded-xl border border-[#D6D0C4]/20 bg-[#FDFCF9] p-5 shadow-sm">
+                <div className="mb-2 flex items-center gap-2">
+                  <div className="h-3 w-16 rounded bg-[#D6D0C4]/30" />
+                  <div className="h-3 w-3 rounded-full bg-[#D6D0C4]/20" />
+                  <div className="h-3 w-20 rounded bg-[#D6D0C4]/30" />
+                  <div className="h-3 w-3 rounded-full bg-[#D6D0C4]/20" />
+                  <div className="h-3 w-16 rounded bg-[#D6D0C4]/30" />
+                  <div className="ml-auto h-3 w-24 rounded bg-[#D6D0C4]/20" />
+                </div>
+                <div className="h-4 w-3/4 rounded bg-[#D6D0C4]/30" />
+              </div>
+            ))}
           </div>
         )}
+
         {!loading && sessions.length === 0 && (
-          <div className="py-12 text-center">
-            <Search className="mx-auto mb-3 h-8 w-8 text-text-muted/40" />
-            <p className="text-sm text-text-secondary">No questions match your filters.</p>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#D6D0C4]/40 bg-[#FDFCF9] px-6 py-16 text-center shadow-sm"
+          >
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0F3226]/5 to-[#0F3226]/10">
+              <Search className="h-6 w-6 text-[#0F3226]/40" />
+            </div>
+            <h3 className="mt-4 font-serif text-lg font-semibold text-[#0A1A14]">No questions found</h3>
+            <p className="mt-1 text-sm text-[#6B7A72]">
+              {boardFilter || subjectFilter || dateFrom || dateTo
+                ? "Try adjusting your filters."
+                : "Ask your first question to see it here."}
+            </p>
+            {!boardFilter && !subjectFilter && !dateFrom && !dateTo && (
+              <a
+                href="/ask"
+                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#0F3226] px-5 py-2.5 text-sm font-medium text-[#FDFCF9] shadow-sm transition-all hover:bg-[#1A4A36] hover:shadow-md"
+              >
+                Ask a question
+                <ArrowRight className="h-4 w-4" />
+              </a>
+            )}
+          </motion.div>
         )}
       </div>
 
+      {/* Load more */}
       {hasMore && !loading && (
-        <button
-          onClick={() => fetchSessions(false)}
-          className="mx-auto flex items-center gap-2 rounded-lg border border-border/60 px-5 py-2 text-xs font-medium text-text-muted transition-colors hover:border-primary hover:text-primary"
-        >
-          Load more
-        </button>
+        <div className="text-center">
+          <button
+            onClick={() => fetchSessions(false)}
+            className="group inline-flex items-center gap-2 rounded-xl border border-[#D6D0C4]/30 bg-[#FDFCF9] px-6 py-2.5 text-xs font-medium text-[#6B7A72] shadow-sm transition-all hover:border-[#0F3226]/30 hover:text-[#0F3226] hover:shadow-md"
+          >
+            Load more
+            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+          </button>
+        </div>
       )}
     </div>
   );
