@@ -12,6 +12,9 @@ const spectral = Spectral({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL || "https://examscore.in"
+  ),
   title: {
     default: "ExamScore — Stop Guessing, Start Scoring",
     template: "%s | ExamScore",
@@ -45,6 +48,9 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
+  },
+  verification: {
+    google: "YOUR_GOOGLE_SEARCH_CONSOLE_VERIFICATION_CODE", // Replace with actual verification code
   },
 };
 
